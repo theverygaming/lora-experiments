@@ -1,13 +1,7 @@
 # nix-shell -p python313Packages.requests -p python313Packages.meshtastic -p python313Packages.cryptography
 
 import requests
-import time
-import base64
-from hashlib import sha256
 import datetime
-import meshtastic_dm
-import traceback
-import json
 
 BASE_URL = "http://192.168.1.184/"
 
@@ -56,25 +50,3 @@ def poll_rx():
                 return data["packet"]
     except requests.exceptions.RequestException:
         pass
-
-
-if __name__ == "__main__":
-    print("Sending config...")
-    send_config()
-
-    # channels.json is a list of objects with the keys name and psk
-    with open("channels.json") as f:
-        channels_json = json.loads(f.read())
-
-    meshtastic = meshtastic_dm.MeshtasticProto(lambda x: send_tx_packet(list(x)), channels_json)
-
-    while True:
-        for _ in range(30):
-            rx = poll_rx()
-            if rx:
-                try:
-                    meshtastic.packet_rx(bytes(rx["data"]), rx["rssi"], rx["snr"])
-                except:
-                    print("exception ingesting meshtastic packet")
-                    traceback.print_exc()
-            time.sleep(0.2)
