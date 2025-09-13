@@ -4,10 +4,8 @@ import json
 import esplora
 import meshtastic_dm
 
-if __name__ == "__main__":
-    print("Sending config...")
-    esplora.send_config()
 
+def meshtastic_stuff():
     # channels.json is a list of objects with the keys name and psk
     with open("channels.json") as f:
         channels_json = json.loads(f.read())
@@ -24,3 +22,9 @@ if __name__ == "__main__":
                     print("exception ingesting meshtastic packet")
                     traceback.print_exc()
             time.sleep(0.2)
+
+if __name__ == "__main__":
+    print("Sending config...")
+    esplora.send_config()
+
+    meshtastic_stuff()
