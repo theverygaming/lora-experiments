@@ -205,6 +205,7 @@ void handleTx() {
     return;
   }
 
+  // TODO: check if channel is busy
   LoRa.beginPacket();
   LoRa.write(txbuf, len);
   LoRa.endPacket();
