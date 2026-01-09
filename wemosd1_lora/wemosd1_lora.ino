@@ -12,7 +12,7 @@ struct Packet {
   uint8_t data[MAX_PACKET_LEN];
   int16_t rssi;       // RSSI of the received packet
   int16_t freqError;  // Frequency error in Hz
-  int8_t snr;         // SNR of packet
+  float snr;         // SNR of packet
 };
 
 Packet rxQueue[RX_QUEUE_SIZE];
