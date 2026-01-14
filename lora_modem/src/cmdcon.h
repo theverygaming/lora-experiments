@@ -10,7 +10,7 @@ public:
     void process();
 private:
     static const size_t MAX_PACKET_LEN = 256;
-    static const size_t RX_QUEUE_SIZE = 10;
+    static const size_t RX_QUEUE_SIZE = 20;
 
     struct QueuePacket {
         int rssi;
@@ -26,6 +26,7 @@ private:
     void dump_packets();
     bool is_stby = true;
     static void rx_hook(size_t psize);
+    void set_rx_mode();
 };
 
 extern CMDCon CMDConGlobal;

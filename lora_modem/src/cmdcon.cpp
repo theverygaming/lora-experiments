@@ -141,13 +141,13 @@ void CMDCon::process() {
 
             if (doc["receive"].as<bool>()) {
                 LOG_DEBUG("settings: set RX mode");
-                radio->modeContinousReceive();
                 this->is_stby = false;
+                set_rx_mode();
                 docOut["receive"] = true;
             } else {
                 LOG_DEBUG("settings: set standby mode");
-                radio->modeStandby();
                 this->is_stby = true;
+                set_rx_mode();
             }
 
             serializeJson(docOut, *this->stream);
@@ -161,6 +161,9 @@ void CMDCon::process() {
             this->stream->println();
         } else if (type == "packetTx") {
             JsonArray data = doc["data"].as<JsonArray>();
+            bool cad = doc["cad"].is<bool>() && doc["cad"].as<bool>();
+            unsigned long cad_wait = doc["cadWait"].is<unsigned long>() ? doc["cadWait"].as<unsigned long>() : 1;
+            unsigned long cad_timeout = doc["cadTimeout"].is<unsigned long>() ? doc["cadTimeout"].as<unsigned long>() : 1;
             size_t buf_size = data.size();
             if (buf_size == 0) {
                 return;
@@ -183,17 +186,23 @@ void CMDCon::process() {
             const char *reason = "";
             bool tx_allowed = true;
             bool tx_success = false;
-            
-            LOG_DEBUG("waiting for channel to become inactive");
-            long tstart = millis();
-            while (radio->isChannelActive()) {
-                if ((millis() - tstart) > 1000*10) {
-                    tx_allowed = false;
-                    reason = "timeout (10s) waiting for channel to clear";
-                    LOG_DEBUG(reason);
-                    break;
+
+            if (cad) {
+                LOG_DEBUG("waiting for channel to become inactive");
+                unsigned long tstart = millis();
+                while (radio->isChannelActive()) {
+                    if (millis() - tstart >= cad_timeout) {
+                        tx_allowed = false;
+                        reason = "cad timeout";
+                        LOG_DEBUG(reason);
+                    }
+
+                    // busy. Receive and wait for cad_wait ms
+                    // we don't wanna miss any packets!
+                    set_rx_mode();
+                    unsigned long tstart2 = millis();
+                    while (millis() - tstart2 < cad_wait) {}
                 }
-                delay(10);
             }
 
             if (tx_allowed && radio->beginPacket()) {
@@ -213,11 +222,7 @@ void CMDCon::process() {
             delete buf;
             
             LOG_DEBUG("setting radio mode back");
-            if (!this->is_stby) {
-                radio->modeContinousReceive();
-            } else {
-                radio->modeStandby();
-            }
+            set_rx_mode();
 
             JsonDocument docOut;
             docOut["type"] = "txAck";
@@ -257,4 +262,12 @@ void CMDCon::dump_packets() {
 #ifdef HAS_LED
     digitalWrite(LED_PIN, LOW);
 #endif
+}
+
+void CMDCon::set_rx_mode() {
+    if (!this->is_stby) {
+        radio->modeContinousReceive();
+    } else {
+        radio->modeStandby();
+    }
 }

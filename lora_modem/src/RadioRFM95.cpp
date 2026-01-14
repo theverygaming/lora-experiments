@@ -87,8 +87,28 @@ void RadioRFM95::modeSleep() {
 }
 
 bool RadioRFM95::isChannelActive() {
-    // doesn't seem to work with the library :c
-    return false;
+    static volatile bool cad_done;
+    static bool cad_detected;
+    cad_done = false;
+    modeStandby();
+    LoRa.onCadDone([](bool active){
+        cad_detected = active;
+        cad_done = true;
+    });
+    unsigned long tstart = millis();
+    LoRa.channelActivityDetection();
+    while (!cad_done) {
+        // hard timeout after 10s
+        if (millis() - tstart > 1000*10) {
+            LOG_DEBUG("CAD 10s timeout");
+            cad_done = true;
+            cad_detected = true; // if CAD doesn't work we are always busy
+            // since we didn't get any interrupt chip is probably still trying to CAD
+            // so we stop CAD by going into standby
+            modeStandby();
+        }
+    }
+    return cad_detected;
 }
 
 int RadioRFM95::rssi() {
