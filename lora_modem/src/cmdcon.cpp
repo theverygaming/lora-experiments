@@ -5,6 +5,7 @@
 #include <main.h>
 #include <ArduinoJson.h>
 #include <variant.h>
+#include <config.h>
 
 CMDCon CMDConGlobal;
 
@@ -50,6 +51,7 @@ void CMDCon::process() {
         }
         String type = doc["type"];
         if (type == "settings") {
+            LOG_DEBUG("got settings");
             JsonDocument docOut;
             if (doc["gain"].is<unsigned short>()) {
                 LOG_DEBUG("settings: set gain");
@@ -148,6 +150,14 @@ void CMDCon::process() {
                 LOG_DEBUG("settings: set standby mode");
                 this->is_stby = true;
                 set_rx_mode();
+            }
+            
+            if (doc["wifi"].is<JsonObject>() && doc["wifi"]["ssid"].is<const char *>() && doc["wifi"]["password"].is<const char *>()) {
+                LOG_DEBUG("settings: got wifi SSID: %s and password", doc["wifi"]["ssid"].as<const char *>());
+                config_set_wifi(doc["wifi"]["ssid"], doc["wifi"]["password"]);
+                config_refresh();
+                docOut["wifi"]["ssid"] = doc["wifi"]["ssid"];
+                docOut["wifi"]["password"] = doc["wifi"]["password"];
             }
 
             serializeJson(docOut, *this->stream);

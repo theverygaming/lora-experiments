@@ -6,10 +6,14 @@
 RadioRFM95::RadioRFM95(SPIClass *spi_cls, uint32_t spi_freq, int cs, int dio0, int reset) {
     LoRa.setPins(cs, reset, dio0);
     LoRa.setSPI(*spi_cls);
+    LoRa.setSPIFrequency(spi_freq);
+    LOG_DEBUG("RadioRFM95 constructed with spi_cls: %p spi_freq: %lu cs: %d dio0: %d reset: %d", spi_cls, (unsigned long)spi_freq, cs, dio0, reset);
 }
 
 bool RadioRFM95::init() {
-    return LoRa.begin(868E6) == 1;
+    int res = LoRa.begin(868E6);
+    LOG_DEBUG("RadioRFM95: LoRa.begin -> %d", res);
+    return res != 0;
 }
 
 bool RadioRFM95::beginPacket(bool implicitHeader) {
