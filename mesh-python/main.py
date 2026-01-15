@@ -10,20 +10,23 @@ def meshtastic_stuff():
     with open("channels.json") as f:
         channels_json = json.loads(f.read())
 
-    meshtastic = meshtastic_dm.MeshtasticProto(lambda x: esplora.send_tx_packet(list(x)), channels_json)
+    meshtastic = meshtastic_dm.MeshtasticProto(lambda x: esplora.tx_packet(list(x)), channels_json)
+
+    def rx_cb(rx):
+        print(rx)
+        try:
+            meshtastic.packet_rx(bytes(rx["data"]), rx["rssi"], rx["snr"])
+        except:
+            print("exception ingesting meshtastic packet")
+            traceback.print_exc()
+
+    esplora.set_rx_cb(rx_cb)
 
     while True:
-        rx = esplora.poll_rx()
-        if rx:
-            try:
-                meshtastic.packet_rx(bytes(rx["data"]), rx["rssi"], rx["snr"])
-            except:
-                print("exception ingesting meshtastic packet")
-                traceback.print_exc()
-        time.sleep(0.2)
+        time.sleep(1)
 
 if __name__ == "__main__":
     print("Sending config...")
-    esplora.send_config()
+    esplora.init()
 
     meshtastic_stuff()

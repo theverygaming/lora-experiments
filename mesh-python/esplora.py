@@ -1,52 +1,82 @@
-# nix-shell -p python313Packages.requests -p python313Packages.meshtastic -p python313Packages.cryptography
+# nix-shell -p python313Packages.meshtastic -p python313Packages.cryptography
 
-import requests
 import datetime
+import threading
+import json
+import socket
 
-BASE_URL = "http://192.168.1.184/"
 
+HOST = "10.40.128.33"
+PORT = 8000
 
-config_data = {
+settings_data = {
+    "type": "settings",
+    "receive": True,
+    "gain": 0, # 0 = AGC
     "frequency": 869525000,
     "spreadingFactor": 11,
-    "bandwidth": 250000,
+    "signalBandwidth": 250000,
     "codingRate4": 5,
     "preambleLength": 16,
-    "txPower": 10,
-    "payloadCRC": True,
     "syncWord": 0x2b,
-    "gain": 0, # 0 = AGC
+    "txPower": 10,
+    "CRC": True,
+    "invertIQ": False,
+    "lowDataRateOptimize": False,
 }
 
+_cb = lambda x: x
+_sockfile = None
 
-def send_config():
-    url = f"{BASE_URL}/config"
-    r = requests.post(url, json=config_data)
-    if r.status_code == 200:
-        print("Config sent successfully:", r.json())
-    else:
-        print("Failed to send config:", r.status_code, r.text)
+def _conn_thread():
+    global _sockfile
+    while True:
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((HOST, PORT))
+            _sockfile = sock.makefile("rw", encoding="utf-8", newline="\n")
+            _sockfile.write(json.dumps(settings_data) + "\n")
+            _sockfile.flush()
+            while True:
+                line = _sockfile.readline()
+                try:
+                    data = json.loads(line)
+                    print(data)
+                    if data["type"] != "packetRx":
+                        continue
+                    _cb({
+                        "data": data["data"],
+                        "rssi": data["rssi"],
+                        "snr": data["snr"],
+                        "freqError": data["freqError"]
+                    })
+                except Exception as e:
+                    print(e)
+                    pass
+        except (ConnectionResetError, BrokenPipeError):
+            _sockfile = None
+            if sock is not None:
+                sock.close()
 
-def send_tx_packet(packet_bytes):
-    url = f"{BASE_URL}/tx"
-    # Convert bytes to JSON array
-    print(f"sending {len(packet_bytes)} byte packet")
-    packet_json = {"packet": list(packet_bytes)}
-    r = requests.post(url, json=packet_json)
-    if r.status_code == 200:
-        print("TX success:", r.json())
-    else:
-        print("TX failed:", r.status_code, r.text)
+def init():
+    t = threading.Thread(target=_conn_thread)
+    t.start()
 
-def poll_rx():
-    url = f"{BASE_URL}/rx"
-    try:
-        r = requests.get(url, timeout=1)
-        if r.status_code == 200:
-            data = r.json()
-            if "packet" in data and data["packet"] is not False:
-                print(f"RX packet ({datetime.datetime.now()}):")
-                print(data["packet"])
-                return data["packet"]
-    except requests.exceptions.RequestException:
-        pass
+def set_rx_cb(cb):
+    global _cb
+    _cb = cb
+
+def tx_packet(packet_bytes):
+    if _sockfile is None:
+        return
+    data = {
+        "type": "packetTx",
+        "data": list(packet_bytes),
+        "cad": True,
+        "cadWait": 100,
+        "cadTimeout": 2000,
+    }
+    print(data)
+    _sockfile.write(json.dumps(data) + "\n")
+    _sockfile.flush()
