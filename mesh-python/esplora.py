@@ -1,9 +1,12 @@
 # nix-shell -p python313Packages.meshtastic -p python313Packages.cryptography
 
+import logging
 import datetime
 import threading
 import json
 import socket
+
+_logger = logging.getLogger(__name__)
 
 
 HOST = "10.40.128.33"
@@ -19,7 +22,7 @@ settings_data = {
     "codingRate4": 5,
     "preambleLength": 16,
     "syncWord": 0x2b,
-    "txPower": 10,
+    "txPower": 20,
     "CRC": True,
     "invertIQ": False,
     "lowDataRateOptimize": False,
@@ -42,8 +45,8 @@ def _conn_thread():
                 line = _sockfile.readline()
                 try:
                     data = json.loads(line)
-                    print(data)
-                    if data["type"] != "packetRx":
+                    _logger.debug("rx from modem: %s", data)
+                    if data.get("type") != "packetRx":
                         continue
                     _cb({
                         "data": data["data"],
@@ -51,10 +54,10 @@ def _conn_thread():
                         "snr": data["snr"],
                         "freqError": data["freqError"]
                     })
-                except Exception as e:
-                    print(e)
-                    pass
+                except:
+                    _logger.exception("processing exception")
         except (ConnectionResetError, BrokenPipeError):
+            _logger.exception("socket exception")
             _sockfile = None
             if sock is not None:
                 sock.close()
@@ -69,6 +72,7 @@ def set_rx_cb(cb):
 
 def tx_packet(packet_bytes):
     if _sockfile is None:
+        _logger.debug("no _sockfile")
         return
     data = {
         "type": "packetTx",
@@ -77,6 +81,6 @@ def tx_packet(packet_bytes):
         "cadWait": 100,
         "cadTimeout": 2000,
     }
-    print(data)
+    _logger.debug("transmitting: %s", data)
     _sockfile.write(json.dumps(data) + "\n")
     _sockfile.flush()
