@@ -1,86 +1,86 @@
-# nix-shell -p python313Packages.meshtastic -p python313Packages.cryptography
-
 import logging
 import datetime
 import threading
 import json
 import socket
+import lora_modem
 
 _logger = logging.getLogger(__name__)
 
+class ESPLora(lora_modem.LoraModem):
+    def __init__(self, host, port):
+        self._host = host
+        self._port = port
+        self._settings_data = {
+            "type": "settings",
+            "receive": True,
+            "gain": 0, # 0 = AGC
+            "frequency": 869525000,
+            "spreadingFactor": 11,
+            "signalBandwidth": 250000,
+            "codingRate4": 5,
+            "preambleLength": 16,
+            "syncWord": 0x2b,
+            "txPower": 20,
+            "CRC": True,
+            "invertIQ": False,
+            "lowDataRateOptimize": False,
+        }
+        self._sockfile = None
+        self._rx_thread_stop = None
 
-HOST = "10.40.128.33"
-PORT = 8000
-
-settings_data = {
-    "type": "settings",
-    "receive": True,
-    "gain": 0, # 0 = AGC
-    "frequency": 869525000,
-    "spreadingFactor": 11,
-    "signalBandwidth": 250000,
-    "codingRate4": 5,
-    "preambleLength": 16,
-    "syncWord": 0x2b,
-    "txPower": 20,
-    "CRC": True,
-    "invertIQ": False,
-    "lowDataRateOptimize": False,
-}
-
-_cb = lambda x: x
-_sockfile = None
-
-def _conn_thread():
-    global _sockfile
-    while True:
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((HOST, PORT))
-            _sockfile = sock.makefile("rw", encoding="utf-8", newline="\n")
-            _sockfile.write(json.dumps(settings_data) + "\n")
-            _sockfile.flush()
-            while True:
-                line = _sockfile.readline()
+    def start(self, rx_cb):
+        def _conn_thread():
+            while not self._rx_thread_stop.is_set():
+                sock = None
                 try:
-                    data = json.loads(line)
-                    _logger.debug("rx from modem: %s", data)
-                    if data.get("type") != "packetRx":
-                        continue
-                    _cb({
-                        "data": data["data"],
-                        "rssi": data["rssi"],
-                        "snr": data["snr"],
-                        "freqError": data["freqError"]
-                    })
-                except:
-                    _logger.exception("processing exception")
-        except (ConnectionResetError, BrokenPipeError):
-            _logger.exception("socket exception")
-            _sockfile = None
-            if sock is not None:
-                sock.close()
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.connect((self._host, self._port))
+                    # FIXME: figure out timeout properly
+                    #sock.settimeout(30) # 30s timeout
+                    self._sockfile = sock.makefile("rw", encoding="utf-8", newline="\n")
+                    self._sockfile.write(json.dumps(self._settings_data) + "\n")
+                    self._sockfile.flush()
+                    while not self._rx_thread_stop.is_set():
+                        line = self._sockfile.readline()
+                        try:
+                            data = json.loads(line)
+                            _logger.debug("rx from modem: %s", data)
+                            if data.get("type") != "packetRx":
+                                continue
+                            rx_cb(lora_modem.LoraPacketReceived(
+                                data=bytes(data["data"]),
+                                rssi=data["rssi"],
+                                snr=data["snr"],
+                                freqError=data["freqError"],
+                            ))
+                        except:
+                            _logger.exception("processing exception")
+                except (ConnectionResetError, BrokenPipeError):
+                    _logger.exception("socket exception")
+                    self._sockfile = None
+                    if sock is not None:
+                        sock.close()
 
-def init():
-    t = threading.Thread(target=_conn_thread)
-    t.start()
+        self._rx_thread_stop = threading.Event()
+        self._rx_thread = threading.Thread(target=_conn_thread)
+        self._rx_thread.start()
 
-def set_rx_cb(cb):
-    global _cb
-    _cb = cb
+    def stop(self):
+        self._rx_thread_stop.set()
+        self._rx_thread.join()
 
-def tx_packet(packet_bytes):
-    if _sockfile is None:
-        _logger.debug("no _sockfile")
-        return
-    data = {
-        "type": "packetTx",
-        "data": list(packet_bytes),
-        "cad": True,
-        "cadWait": 100,
-        "cadTimeout": 2000,
-    }
-    _logger.debug("transmitting: %s", data)
-    _sockfile.write(json.dumps(data) + "\n")
-    _sockfile.flush()
+    def tx(self, p: lora_modem.LoraPacket):
+        if self._sockfile is None:
+            _logger.debug("no TX cuz no _sockfile")
+            return
+        data = {
+            "type": "packetTx",
+            "data": list(p.data),
+            "cad": True,
+            "cadWait": 2000,
+            "cadTimeout": 10000,
+        }
+        _logger.debug("transmitting: %s", data)
+        self._sockfile.write(json.dumps(data) + "\n")
+        self._sockfile.flush()
