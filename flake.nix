@@ -41,6 +41,11 @@
               platformio
               # because platformio is broken idk
               python313Packages.packaging
+
+              # rustymesh
+              cargo
+              rustc
+              maturin
             ];
         };
       }
