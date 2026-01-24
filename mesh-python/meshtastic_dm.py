@@ -67,6 +67,29 @@ class Meshtastic:
 
         _logger.debug("received packet on channel '%s': %s", self._channel_hash_map.get(packet["channelHash"], {}).get("name"), repr(packet))
 
+        if "payload" in packet:
+            protobuf_dict = google.protobuf.json_format.MessageToDict(packet["payload"], preserving_proto_field_name=True)
+            protobuf_dict_payload_bytes = base64.b64decode(protobuf_dict.get("payload", ""))
+            match protobuf_dict["portnum"]:
+                case "TEXT_MESSAGE_APP":
+                    protobuf_dict["payload"] = protobuf_dict_payload_bytes.decode("utf-8")
+            pb_lookup = {
+                "POSITION_APP": meshtastic.mesh_pb2.Position,
+                "NODEINFO_APP": meshtastic.mesh_pb2.NodeInfo,
+                "ROUTING_APP": meshtastic.mesh_pb2.Routing,
+                "TEXT_MESSAGE_COMPRESSED_APP": meshtastic.mesh_pb2.Compressed,
+                "WAYPOINT_APP": meshtastic.mesh_pb2.Waypoint,
+                "TELEMETRY_APP": meshtastic.telemetry_pb2.Telemetry,
+                "TRACEROUTE_APP": meshtastic.mesh_pb2.RouteDiscovery,
+                "NEIGHBORINFO_APP": meshtastic.mesh_pb2.NeighborInfo,
+            }
+            if protobuf_dict["portnum"] in pb_lookup:
+                pbd = pb_lookup[protobuf_dict["portnum"]]()
+                pbd.ParseFromString(protobuf_dict_payload_bytes)
+                protobuf_dict["payload"] = google.protobuf.json_format.MessageToDict(pbd, preserving_proto_field_name=True)
+
+            _logger.debug("packet decoded protobuf: %s", protobuf_dict)
+
         # relay?
         if packet["hopLimit"] > 0 and packet["packetID"] not in self._heard_packet_ids and packet["destination"] != self._node_id:
             # TODO: meshtastic actually has intelligent algos for this, if
@@ -75,35 +98,49 @@ class Meshtastic:
             npkdata = dict(packet)
             npkdata["hopLimit"] -= 1
             _logger.debug("relaying packet: %s", npkdata["packetID"])
-            self._modem.tx(lora_modem.LoraPacket(self.packet_serialize(npkdata)))
+            self._heard_packet_ids.add(packet["packetID"])
+            # traceroute to someone else?
+            if "payload" in packet and protobuf_dict["portnum"] == "TRACEROUTE_APP":
+                _logger.debug("processing traceroute")
+                # FIXME: traceroute seems to use nextHop on the way back.. we just ignore that lmfao.. we should probably not (https://github.com/meshtastic/firmware/blob/57a3ff8dfcc7b2b4f766de224cc80376e7332564/src/modules/TraceRouteModule.cpp#L269)
+                new_pb_payload = protobuf_dict["payload"]
 
-        self._heard_packet_ids.add(packet["packetID"])
+                # figure out direction and which values to set
+                is_on_way_back = "request_id" in protobuf_dict
+                hops_away = packet["hopStart"] - packet["hopLimit"]
+                route_key = "route" if not is_on_way_back else "route_back"
+                snr_key = "snr_towards" if not is_on_way_back else "snr_back"
+                # ensure snr and route arrays exist
+                for k in [route_key, snr_key]:
+                    if k not in new_pb_payload:
+                        new_pb_payload[k] = []
+
+                # fix the route (there may have been unknown hops)
+                if hops_away >= 0:
+                    diff = hops_away - len(new_pb_payload[route_key])
+                    for _ in range(diff):
+                        new_pb_payload[route_key].append(0xFFFFFFFF) # broadcast = unknown node
+                    diff = hops_away - len(new_pb_payload[snr_key])
+                    for _ in range(diff):
+                        new_pb_payload[snr_key].append(-128) # minimum value of 8-bit signed (two's complement) integer = unknown node
+                
+                # add the current hop to the route
+                new_pb_payload[snr_key].append(int(snr * 4)) # SNR is converted to a byte by multiplying to by 4
+                new_pb_payload[route_key].append(self._node_id)
+
+                _logger.debug("processed traceroute: %s", new_pb_payload)
+
+                npkdata["payload"].payload = google.protobuf.json_format.ParseDict(new_pb_payload, meshtastic.mesh_pb2.RouteDiscovery(), ignore_unknown_fields=False).SerializeToString()
+            self._modem.tx(lora_modem.LoraPacket(self.packet_serialize(npkdata)))
+        else:
+            self._heard_packet_ids.add(packet["packetID"])
 
         if "payload" not in packet:
             _logger.debug("no payload in packet, cannot process further")
             return
 
-        protobuf_dict = google.protobuf.json_format.MessageToDict(packet["payload"], preserving_proto_field_name=True)
-        protobuf_dict_payload_bytes = base64.b64decode(protobuf_dict.get("payload", ""))
-        match protobuf_dict["portnum"]:
-            case "TEXT_MESSAGE_APP":
-                protobuf_dict["payload"] = protobuf_dict_payload_bytes.decode("utf-8")
-        pb_lookup = {
-            "POSITION_APP": meshtastic.mesh_pb2.Position,
-            "NODEINFO_APP": meshtastic.mesh_pb2.NodeInfo,
-            "ROUTING_APP": meshtastic.mesh_pb2.Routing,
-            "TEXT_MESSAGE_COMPRESSED_APP": meshtastic.mesh_pb2.Compressed,
-            "WAYPOINT_APP": meshtastic.mesh_pb2.Waypoint,
-            "TELEMETRY_APP": meshtastic.telemetry_pb2.Telemetry,
-            "TRACEROUTE_APP": meshtastic.mesh_pb2.RouteDiscovery,
-            "NEIGHBORINFO_APP": meshtastic.mesh_pb2.NeighborInfo,
-        }
-        if protobuf_dict["portnum"] in pb_lookup:
-            pbd = pb_lookup[protobuf_dict["portnum"]]()
-            pbd.ParseFromString(protobuf_dict_payload_bytes)
-            protobuf_dict["payload"] = google.protobuf.json_format.MessageToDict(pbd, preserving_proto_field_name=True)
-
-        _logger.debug("packet decoded protobuf: %s", protobuf_dict)
+        # TODO: traceroute to us?
+        # if protobuf_dict["portnum"] == "TRACEROUTE_APP" and packet["destination"] == self._node_id:
 
         # ping reply?
         if packet["payload"].portnum == meshtastic.portnums_pb2.PortNum.TEXT_MESSAGE_APP and packet["channelHash"] == self._channels["gg"]["hash"] and packet["payload"].payload.decode("utf-8", errors="ignore").startswith("ping"):
