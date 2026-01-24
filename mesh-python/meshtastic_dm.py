@@ -7,6 +7,7 @@ import cryptography.hazmat.primitives.ciphers
 import meshtastic
 import json
 import random
+import uuid
 import google.protobuf.json_format
 
 _logger = logging.getLogger(__name__)
@@ -26,6 +27,9 @@ class MeshtasticProto():
 
         self.channel_hash_map = {c["hash"]: c for c in self.channels.values()}
         self.heard_packet_ids = set()
+
+        self._node_id = int.from_bytes(random.Random(uuid.getnode()).randbytes(4), "little")
+        _logger.info("chose random node ID: %d (0x%x)", self._node_id, self._node_id)
 
     def packet_rx(self, data: bytes, rssi: int, snr: float):
         packet = self.packet_deserialize(data, {
@@ -82,7 +86,7 @@ class MeshtasticProto():
             msg.reply_id = packet["packetID"]
             npkdata = {
                 "destination": 0xFFFFFFFF,
-                "sender": 0xAABBCCDD,
+                "sender": self._node_id,
                 "packetID": int.from_bytes(random.randbytes(4), "little"),
                 "hopLimit": 3,
                 "wantAck": False,
