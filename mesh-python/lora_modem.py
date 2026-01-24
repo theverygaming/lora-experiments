@@ -19,3 +19,19 @@ class LoraModem:
 
     def tx(self, p: LoraPacket):
         raise NotImplementedError()
+    
+    def set_lora_settings(
+        self,
+        gain: int, # 0 = AGC, 1=min 10=max
+        frequency: int,
+        spreading_factor: int,
+        bandwidth: int,
+        coding_rate_4: int,
+        preable_length: int,
+        syncword: int,
+        tx_power: int,
+        crc: bool,
+        invert_iq: bool,
+        low_data_rate_optimize: bool,
+    ):
+        raise NotImplementedError()
