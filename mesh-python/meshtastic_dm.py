@@ -9,14 +9,17 @@ import json
 import random
 import uuid
 import google.protobuf.json_format
+import lora_modem
+
 
 _logger = logging.getLogger(__name__)
 
 
-class MeshtasticProto():
-    def __init__(self, packet_tx, channels: list[dict]):
-        self.packet_tx = packet_tx
-        self.channels = {
+class Meshtastic:
+    def __init__(self, modem: lora_modem.LoraModem, channels: list[dict]):
+        self._modem = modem
+
+        self._channels = {
             c["name"]: {
                 "hash": self._channel_hash(c2 := c | {
                     "key": self._psk_to_key(c["psk"]),
@@ -25,11 +28,36 @@ class MeshtasticProto():
             for c in channels
         }
 
-        self.channel_hash_map = {c["hash"]: c for c in self.channels.values()}
-        self.heard_packet_ids = set()
+        self._channel_hash_map = {c["hash"]: c for c in self._channels.values()}
+        self._heard_packet_ids = set()
 
         self._node_id = int.from_bytes(random.Random(uuid.getnode()).randbytes(4), "little")
         _logger.info("chose random node ID: %d (0x%x)", self._node_id, self._node_id)
+
+    def start(self):
+        def rx_cb(p):
+            try:
+                self.packet_rx(p.data, p.rssi, p.snr)
+            except:
+                _logger.exception("exception ingesting meshtastic packet")
+        self._modem.start(rx_cb)
+        # LongFast EU_868
+        self._modem.set_lora_settings(
+            gain=0, # AGC
+            frequency=869525000,
+            spreading_factor=11,
+            bandwidth=250000,
+            coding_rate_4=5,
+            preable_length=16,
+            syncword=0x2b, # meshtastic
+            tx_power=20,
+            crc=True,
+            invert_iq=False,
+            low_data_rate_optimize=False,
+        )
+
+    def stop(self):
+        self._modem.stop()
 
     def packet_rx(self, data: bytes, rssi: int, snr: float):
         packet = self.packet_deserialize(data, {
@@ -37,19 +65,19 @@ class MeshtasticProto():
             "snr": snr,
         })
 
-        _logger.debug("received packet on channel '%s': %s", self.channel_hash_map.get(packet["channelHash"], {}).get("name"), repr(packet))
+        _logger.debug("received packet on channel '%s': %s", self._channel_hash_map.get(packet["channelHash"], {}).get("name"), repr(packet))
 
         # relay?
-        if packet["hopLimit"] > 0 and packet["packetID"] not in self.heard_packet_ids:
+        if packet["hopLimit"] > 0 and packet["packetID"] not in self._heard_packet_ids and packet["destination"] != self._node_id:
             # TODO: meshtastic actually has intelligent algos for this, if
             # this code was deployed on every node the network would be ass lmao
             # _fix it_
             npkdata = dict(packet)
             npkdata["hopLimit"] -= 1
             _logger.debug("relaying packet: %s", npkdata["packetID"])
-            self.packet_tx(self.packet_serialize(npkdata))
+            self._modem.tx(lora_modem.LoraPacket(self.packet_serialize(npkdata)))
 
-        self.heard_packet_ids.add(packet["packetID"])
+        self._heard_packet_ids.add(packet["packetID"])
 
         if "payload" not in packet:
             _logger.debug("no payload in packet, cannot process further")
@@ -78,7 +106,7 @@ class MeshtasticProto():
         _logger.debug("packet decoded protobuf: %s", protobuf_dict)
 
         # ping reply?
-        if packet["payload"].portnum == meshtastic.portnums_pb2.PortNum.TEXT_MESSAGE_APP and packet["channelHash"] == self.channels["gg"]["hash"] and packet["payload"].payload.decode("utf-8", errors="ignore").startswith("ping"):
+        if packet["payload"].portnum == meshtastic.portnums_pb2.PortNum.TEXT_MESSAGE_APP and packet["channelHash"] == self._channels["gg"]["hash"] and packet["payload"].payload.decode("utf-8", errors="ignore").startswith("ping"):
             msg = meshtastic.mesh_pb2.Data()
             msg.portnum = meshtastic.portnums_pb2.PortNum.TEXT_MESSAGE_APP
             msg.payload = f"pong RSSI: {rssi}dBm SNR: {snr}dB".encode("utf-8")
@@ -92,15 +120,15 @@ class MeshtasticProto():
                 "wantAck": False,
                 "viaMQTT": False,
                 "hopStart": 3,
-                "channelHash": self.channels["gg"]["hash"],
+                "channelHash": self._channels["gg"]["hash"],
                 "nextHop": 0,
                 "relayNode": 0,
                 "payload": msg,
             }
             # make sure we don't relay our own packet again lmao
-            self.heard_packet_ids.add(npkdata["packetID"])
+            self._heard_packet_ids.add(npkdata["packetID"])
 
-            self.packet_tx(self.packet_serialize(npkdata))
+            self._modem.tx(lora_modem.LoraPacket(self.packet_serialize(npkdata)))
 
     def packet_serialize(self, packet: dict) -> bytes:
         def packet_encrypt(packet: dict):
@@ -187,7 +215,7 @@ class MeshtasticProto():
         return packet
 
     def _packet_prepare_cipher(self, packet: dict):
-        channel = self.channel_hash_map.get(packet["channelHash"])
+        channel = self._channel_hash_map.get(packet["channelHash"])
         if not channel:
             raise Exception("no channel for cipher found")
         key = channel["key"]

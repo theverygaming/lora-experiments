@@ -12,30 +12,8 @@ def meshtastic_stuff(esplora_inst):
     with open("channels.json") as f:
         channels_json = json.loads(f.read())
 
-    esplora_inst.set_lora_settings(
-        gain=0, # AGC
-        frequency=869525000,
-        spreading_factor=11,
-        bandwidth=250000,
-        coding_rate_4=5,
-        preable_length=16,
-        syncword=0x2b, # meshtastic
-        tx_power=20,
-        crc=True,
-        invert_iq=False,
-        low_data_rate_optimize=False,
-    )
-
-    meshtastic = meshtastic_dm.MeshtasticProto(lambda x: esplora_inst.tx(lora_modem.LoraPacket(data=x)), channels_json)
-
-    def rx_cb(p):
-        _logger.debug("rx_cb: %s", p)
-        try:
-            meshtastic.packet_rx(p.data, p.rssi, p.snr)
-        except:
-            _logger.exception("exception ingesting meshtastic packet")
-
-    esplora_inst.start(rx_cb)
+    meshtastic_inst = meshtastic_dm.Meshtastic(esplora_inst, channels_json)
+    meshtastic_inst.start()
 
 if __name__ == "__main__":
     logging.basicConfig(
