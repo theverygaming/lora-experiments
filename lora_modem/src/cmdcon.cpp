@@ -151,17 +151,19 @@ void CMDCon::process() {
                 }
             }
 
-            if (doc["receive"].as<bool>()) {
-                LOG_DEBUG("settings: set RX mode");
-                this->is_stby = false;
-                set_rx_mode();
-                docOut["receive"] = true;
-            } else {
-                LOG_DEBUG("settings: set standby mode");
-                this->is_stby = true;
-                set_rx_mode();
+            if (doc["receive"].is<bool>()) {
+                if (doc["receive"].as<bool>()) {
+                    LOG_DEBUG("settings: set RX mode");
+                    this->is_stby = false;
+                    set_rx_mode();
+                    docOut["receive"] = true;
+                } else {
+                    LOG_DEBUG("settings: set standby mode");
+                    this->is_stby = true;
+                    set_rx_mode();
+                }
             }
-            
+
             if (doc["wifi"].is<JsonObject>() && doc["wifi"]["ssid"].is<const char *>() && doc["wifi"]["password"].is<const char *>()) {
                 LOG_DEBUG("settings: got wifi SSID: %s and password", doc["wifi"]["ssid"].as<const char *>());
                 config_set_wifi(doc["wifi"]["ssid"], doc["wifi"]["password"]);
@@ -221,7 +223,10 @@ void CMDCon::process() {
                     // we don't wanna miss any packets!
                     set_rx_mode();
                     unsigned long tstart2 = millis();
-                    while (millis() - tstart2 < cad_wait) {}
+                    while (millis() - tstart2 < cad_wait) {
+                        delay(1);
+                    }
+                    yield();
                 }
             }
 

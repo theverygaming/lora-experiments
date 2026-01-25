@@ -111,6 +111,7 @@ bool RadioRFM95::isChannelActive() {
             // so we stop CAD by going into standby
             modeStandby();
         }
+        yield();
     }
     return cad_detected;
 }
