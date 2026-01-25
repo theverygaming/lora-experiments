@@ -203,7 +203,7 @@ void CMDCon::process() {
                 while (radio->isChannelActive()) {
                     if (millis() - tstart >= cad_timeout) {
                         tx_allowed = false;
-                        reason = "cad timeout";
+                        reason = "cadTimeout";
                         LOG_DEBUG(reason);
                     }
 
