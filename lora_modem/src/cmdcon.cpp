@@ -38,6 +38,16 @@ void CMDCon::process() {
     if (this->stream == nullptr) {
         return;
     }
+    if (millis() - this->prev_telem > 2 * 1000) {
+        JsonDocument doc;
+        doc["type"] = "telemetry";
+        if (!this->is_stby) {
+            doc["rssi"] = radio->rssi();
+        }
+        serializeJson(doc, *this->stream);
+        this->stream->println();
+        this->prev_telem = millis();
+    }
     dump_packets();
     if (this->stream->available() != 0) {
         auto jsonstr = this->stream->readStringUntil('\n');

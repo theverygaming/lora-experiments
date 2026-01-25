@@ -27,6 +27,7 @@ private:
     bool is_stby = true;
     static void rx_hook(size_t psize);
     void set_rx_mode();
+    unsigned long prev_telem = 0;
 };
 
 extern CMDCon CMDConGlobal;
