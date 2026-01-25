@@ -34,6 +34,8 @@ class ESPLora(lora_modem.LoraModem):
                         line = self._sockfile.readline()
                         try:
                             data = json.loads(line)
+                            if not data:
+                                continue
                             if data.get("type") not in ["telemetry"]:
                                 _logger.debug("rx from modem: %s", data)
                             if data.get("type") != "packetRx":
