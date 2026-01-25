@@ -4,6 +4,7 @@ import threading
 import json
 import socket
 import lora_modem
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -24,9 +25,8 @@ class ESPLora(lora_modem.LoraModem):
                 sock = None
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(15) # 15s timeout
                     sock.connect((self._host, self._port))
-                    # FIXME: figure out timeout properly
-                    #sock.settimeout(30) # 30s timeout
                     self._sockfile = sock.makefile("rw", encoding="utf-8", newline="\n")
                     self._sockfile.write(json.dumps(self._settings_data) + "\n")
                     self._sockfile.flush()
@@ -34,7 +34,8 @@ class ESPLora(lora_modem.LoraModem):
                         line = self._sockfile.readline()
                         try:
                             data = json.loads(line)
-                            _logger.debug("rx from modem: %s", data)
+                            if data.get("type") not in ["telemetry"]:
+                                _logger.debug("rx from modem: %s", data)
                             if data.get("type") != "packetRx":
                                 continue
                             rx_cb(lora_modem.LoraPacketReceived(
@@ -45,11 +46,12 @@ class ESPLora(lora_modem.LoraModem):
                             ))
                         except:
                             _logger.exception("processing exception")
-                except (ConnectionResetError, BrokenPipeError):
-                    _logger.exception("socket exception")
+                except:
+                    _logger.exception("exception")
                     self._sockfile = None
                     if sock is not None:
                         sock.close()
+                    time.sleep(1) # don't immediately attempt to reconnect
 
         self._rx_thread_stop = threading.Event()
         self._rx_thread = threading.Thread(target=_conn_thread)
