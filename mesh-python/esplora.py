@@ -82,7 +82,9 @@ class ESPLora(lora_modem.LoraModem):
         for k, v in vals.items():
             self._settings_data[k] = v
         if self._sockfile is not None:
+            _logger.debug("updating settings: %s", vals)
             self._sockfile.write(json.dumps({"type": "settings", **vals}) + "\n")
+            self._sockfile.flush()
 
     def _set_lora_setting(self, name, val):
         self._set_lora_settings({name: val})
