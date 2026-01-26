@@ -198,7 +198,16 @@ class Meshcore:
     def start(self):
         def rx_cb(p):
             _logger.debug("deserialized: %s", MeshcorePacket.deserialize(p.data))
-            self._modem.tx(p)
+            # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
+            repeat_full_pwr = p.rssi > -80
+            try:
+                if repeat_full_pwr:
+                    _logger.debug("repeating this packet with full power")
+                    self._modem.set_tx_power(20)
+                self._modem.tx(p)
+            finally:
+                if repeat_full_pwr:
+                    self._modem.set_tx_power(0)
         self._modem.start(rx_cb)
         # EU/UK (Narrow) preset
         self._modem.set_gain(0) # AGC
