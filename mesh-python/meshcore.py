@@ -201,15 +201,15 @@ class Meshcore:
             self._modem.tx(p)
         self._modem.start(rx_cb)
         # EU/UK (Narrow) preset
-        self._modem.set_lora_settings(
-            gain=0, # AGC
-            frequency=869618000,
-            spreading_factor=8,
-            bandwidth=62500,
-            coding_rate_4=8,
-            preable_length=16,
-            syncword=0x12, # Meshcore (RADIOLIB_SX126X_SYNC_WORD_PRIVATE)
-            tx_power=0, # don't wanna annoy anyone with my silly packets rn # TODO: more power when this works properly 
+        self._modem.set_gain(0) # AGC
+        self._modem.set_frequency(869618000)
+        self._modem.set_spreading_factor(8)
+        self._modem.set_bandwidth(62500)
+        self._modem.set_coding_rate(8)
+        self._modem.set_preamble_length(16)
+        self._modem.set_syncword(0x12) # Meshcore (RADIOLIB_SX126X_SYNC_WORD_PRIVATE)
+        self._modem.set_tx_power(0) # don't wanna annoy anyone with my silly packets rn # TODO: more power when this works properly
+        self._modem.set_aux_lora_settings(
             crc=True,
             invert_iq=False,
             low_data_rate_optimize=False,

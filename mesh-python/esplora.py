@@ -78,34 +78,56 @@ class ESPLora(lora_modem.LoraModem):
         self._sockfile.write(json.dumps(data) + "\n")
         self._sockfile.flush()
 
-    def set_lora_settings(
+    def _set_lora_settings(self, vals: dict):
+        for k, v in vals.items():
+            self._settings_data[k] = v
+        if self._sockfile is not None:
+            self._sockfile.write(json.dumps({"type": "settings", **vals}) + "\n")
+
+    def _set_lora_setting(self, name, val):
+        self._set_lora_settings({name: val})
+
+    def set_gain(self, gain: int):
+        """
+        0 = AGC, 1=min 10=max
+        """
+        # scale from 1-10 to 1-6
+        if gain != 0:
+            gain = max(int((gain * 6) / 10), 1)
+        self._set_lora_setting("gain", gain)
+
+    def set_frequency(self, freq_hz: int) -> None:
+        self._set_lora_setting("frequency", freq_hz)
+
+    def set_spreading_factor(self, sf: int) -> None:
+        self._set_lora_setting("spreadingFactor", sf)
+
+    def set_bandwidth(self, bandwidth: int) -> None:
+        self._set_lora_setting("signalBandwidth", bandwidth)
+
+    def set_coding_rate(self, coding_rate: int) -> None:
+        """
+        Coding rate 4/x
+        """
+        self._set_lora_setting("codingRate4", coding_rate)
+
+    def set_preamble_length(self, bits: int) -> None:
+        self._set_lora_setting("preambleLength", bits)
+
+    def set_syncword(self, syncword: int) -> None:
+        self._set_lora_setting("syncWord", syncword)
+
+    def set_tx_power(self, tx_power: int) -> None:
+        self._set_lora_setting("txPower", tx_power)
+
+    def set_aux_lora_settings(
         self,
-        gain: int, # 0 = AGC, 1=min 10=max
-        frequency: int,
-        spreading_factor: int,
-        bandwidth: int,
-        coding_rate_4: int,
-        preable_length: int,
-        syncword: int,
-        tx_power: int,
         crc: bool,
         invert_iq: bool,
         low_data_rate_optimize: bool,
     ):
-        self._settings_data = {
-            "type": "settings",
-            "receive": True,
-            "gain": gain, # 0 = AGC
-            "frequency": frequency,
-            "spreadingFactor": spreading_factor,
-            "signalBandwidth": bandwidth,
-            "codingRate4": coding_rate_4,
-            "preambleLength": preable_length,
-            "syncWord": syncword,
-            "txPower": tx_power,
+        self._set_lora_settings({
             "CRC": crc,
             "invertIQ": invert_iq,
             "lowDataRateOptimize": low_data_rate_optimize,
-        }
-        if self._sockfile is not None:
-            self._sockfile.write(json.dumps(self._settings_data) + "\n")
+        })
