@@ -498,7 +498,7 @@ blocks:
     ant8: ''
     ant9: ''
     args: '"rtl_tcp=10.40.128.8:1234"'
-    bb_gain0: '49.6'
+    bb_gain0: '47'
     bb_gain1: '20'
     bb_gain10: '20'
     bb_gain11: '20'
@@ -667,7 +667,7 @@ blocks:
     freq7: 100e6
     freq8: 100e6
     freq9: 100e6
-    gain0: '49.6'
+    gain0: '47'
     gain1: '10'
     gain10: '10'
     gain11: '10'
@@ -731,7 +731,7 @@ blocks:
     gain_mode7: 'False'
     gain_mode8: 'False'
     gain_mode9: 'False'
-    if_gain0: '49.6'
+    if_gain0: '47'
     if_gain1: '20'
     if_gain10: '20'
     if_gain11: '20'
