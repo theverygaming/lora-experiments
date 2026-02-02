@@ -58,8 +58,8 @@ long RadioRFM95::packetFrequencyError() {
     return 0;
 }
 
-void RadioRFM95::modeContinousReceive() {
-    LoRa.receive();
+void RadioRFM95::modeContinousReceive(size_t size) {
+    LoRa.receive(size);
 }
 
 void RadioRFM95::onReceive(void (*cb)(size_t)) {

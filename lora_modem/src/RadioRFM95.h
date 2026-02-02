@@ -22,7 +22,7 @@ public:
     int packetRSSI() override;
     float packetSNR() override;
     long packetFrequencyError() override;
-    void modeContinousReceive() override;
+    void modeContinousReceive(size_t size = 0) override;
     void onReceive(void (*cb)(size_t)) override;
     int read() override;
 

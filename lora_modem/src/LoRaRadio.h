@@ -27,8 +27,8 @@ public:
     virtual float packetSNR();
     // frequency error of packet in Hz
     virtual long packetFrequencyError();
-    // continuous receive mode, used together with onReceive
-    virtual void modeContinousReceive();
+    // continuous receive mode, used together with onReceive, nonzero size means implicit header mode
+    virtual void modeContinousReceive(size_t size = 0);
     // onReceive callback, used in continuous receive mode - if set will make getPacketSingle not return as usual and fire instead NOTE: this gets called from interrupt context!
     virtual void onReceive(void (*cb)(size_t));
     // read a byte from the modem (returns -1 on failure)
