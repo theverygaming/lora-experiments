@@ -45,12 +45,14 @@ static void config_reset() {
 
 static void config_reinit_wifi(JsonDocument &doc) {
     LOG_DEBUG("config_reinit_wifi()");
+    #ifdef USE_WIFI
     if (doc["wifi"].is<JsonObject>() && doc["wifi"]["ssid"].is<const char *>() && doc["wifi"]["password"].is<const char *>()) {
         const char *ssid = doc["wifi"]["ssid"];
         const char *password = doc["wifi"]["password"];
         LOG_INFO("connecting to WiFi SSID: %s", ssid);
         WiFi.begin(ssid, password);
     }
+    #endif
 }
 
 void config_init() {
@@ -60,7 +62,7 @@ void config_init() {
         config_reset();
     }
 
-#if defined(ESP32)
+#if defined(ESP32) && defined(USE_WIFI)
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info){
         static WiFiEvent_t ev_prev = (WiFiEvent_t)0;
         if (event == ev_prev) {
@@ -108,15 +110,19 @@ void config_init() {
 
 void config_set_wifi(const char *ssid, const char *password) {
     LOG_DEBUG("config_set_wifi(%s, ***)", ssid);
+#ifdef USE_WIFI
     JsonDocument doc = config_read();
     JsonObject obj = doc["wifi"].to<JsonObject>();
     obj["ssid"] = ssid;
     obj["password"] = password;
     config_write(doc);
+#endif
 }
 
 void config_refresh() {
     LOG_DEBUG("config_refresh()");
     JsonDocument doc = config_read();
+#ifdef USE_WIFI
     config_reinit_wifi(doc);
+#endif
 }

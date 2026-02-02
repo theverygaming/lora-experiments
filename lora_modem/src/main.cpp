@@ -30,14 +30,16 @@ void setup() {
     serialcon_init();
     LOG_INFO("hi from lora_modem!");
 
-    if(!LittleFS.begin()) {
+    if(!LittleFS.begin(true /* formatOnFail */)) {
         LOG_ERROR("could not initialize LittleFS, rebooting in 10s");
         delay(10*1000);
         ESP.restart();
     }
     config_init();
 
+#ifdef USE_WIFI
     tcpserver_init();
+#endif
 
     LOG_DEBUG("SPI init");
 #if defined(ESP32)
@@ -78,6 +80,8 @@ void setup() {
 
 void loop() {
     serialcon_poll();
+#ifdef USE_WIFI
     tcpserver_loop();
+#endif
     CMDConGlobal.process();
 }

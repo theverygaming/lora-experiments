@@ -2,6 +2,7 @@
 #include <logging.h>
 #include <cmdcon.h>
 
+#ifdef USE_WIFI
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ARDUINO_ARCH_ESP8266)
@@ -13,7 +14,9 @@ static WiFiServer server(8000);
 static WiFiClient active_client;
 
 void tcpserver_init() {
+    LOG_DEBUG("initializing TCP server");
     server.begin();
+    LOG_DEBUG("initialized TCP server");
 }
 
 void tcpserver_loop() {
@@ -25,3 +28,4 @@ void tcpserver_loop() {
         }
     }
 }
+#endif
