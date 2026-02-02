@@ -22,11 +22,15 @@ void serialcon_init() {
 }
 
 void serialcon_print(const char *str) {
-    SERIALCON_SERIAL_PORT.print(str);
+    if (!serialcon_cmd_mode) {
+        SERIALCON_SERIAL_PORT.print(str);
+    }
 }
 
 void serialcon_println(const char *str) {
-    SERIALCON_SERIAL_PORT.println(str);
+    if (!serialcon_cmd_mode) {
+        SERIALCON_SERIAL_PORT.println(str);
+    }
 }
 
 void serialcon_poll() {
