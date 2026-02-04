@@ -30,7 +30,7 @@ void CMDCon::set_stream(Stream *s) {
     LOG_DEBUG("set_stream");
     this->stream = s;
     radio->onReceive(rx_hook);
-    radio->modeContinousReceive();
+    radio->modeStandby();
     this->is_stby = true;
 }
 
