@@ -40,6 +40,12 @@ void serialcon_poll() {
     if (SERIALCON_SERIAL_PORT.available()) {
         LOG_DEBUG("entering serial CMD mode");
         serialcon_cmd_mode = true;
-        CMDConGlobal.set_stream(&SERIALCON_SERIAL_PORT);
+        CMDConGlobal.set_stream(
+            &SERIALCON_SERIAL_PORT,
+            [](){
+                serialcon_cmd_mode = false;
+                LOG_DEBUG("serial CMD mode disabled");
+            }
+        );
     }
 }

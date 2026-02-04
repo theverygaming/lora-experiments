@@ -37,36 +37,48 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 869.525e6
+    value: 869.618e6
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 12.0]
+    coordinate: [480, 12.0]
+    rotation: 0
+    state: enabled
+- name: lora_bw
+  id: variable
+  parameters:
+    comment: ''
+    value: '62500'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [584, 12.0]
     rotation: 0
     state: enabled
 - name: samp_rate
   id: variable
   parameters:
     comment: ''
-    value: '500000 # 2e6'
+    value: lora_bw*2
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 12]
+    coordinate: [272, 12.0]
     rotation: 0
     state: enabled
 - name: samp_rate_sdr
   id: variable
   parameters:
     comment: ''
-    value: 2.4e6
+    value: int(2.4e6)
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 36.0]
+    coordinate: [368, 12.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_0
@@ -81,7 +93,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 552.0]
+    coordinate: [432, 544.0]
     rotation: 0
     state: enabled
 - name: lora_rx_0
@@ -89,7 +101,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    bw: '250000'
+    bw: lora_bw
     comment: ''
     cr: '1'
     has_crc: 'True'
@@ -99,10 +111,10 @@ blocks:
     minoutbuf: '0'
     pay_len: '255'
     print_rx: '[True,True]'
-    samp_rate: int(samp_rate)
-    sf: '11'
+    samp_rate: samp_rate
+    sf: '8'
     soft_decoding: 'True'
-    sync_word: '[0x2b]'
+    sync_word: '[0, 0]'
   states:
     bus_sink: false
     bus_source: false
@@ -284,7 +296,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [408, 452.0]
+    coordinate: [416, 452.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0
@@ -412,8 +424,8 @@ blocks:
     freqhalf: 'True'
     grid: 'False'
     gui_hint: ''
-    int_max: '10'
-    int_min: '-140'
+    int_max: '0'
+    int_min: '-100'
     label1: ''
     label10: ''
     label2: ''
@@ -431,13 +443,13 @@ blocks:
     nconnections: '1'
     showports: 'False'
     type: complex
-    update_time: '0.1'
+    update_time: 32768/samp_rate
     wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 188.0]
+    coordinate: [648, 180.0]
     rotation: 0
     state: disabled
 - name: rational_resampler_xxx_0
@@ -446,9 +458,9 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    decim: '24'
+    decim: samp_rate_sdr // __import__('math').gcd(samp_rate_sdr, samp_rate)
     fbw: '0'
-    interp: '5'
+    interp: samp_rate // __import__('math').gcd(samp_rate_sdr, samp_rate)
     maxoutbuf: '0'
     minoutbuf: '0'
     taps: '[]'
@@ -530,7 +542,7 @@ blocks:
     bb_gain7: '20'
     bb_gain8: '20'
     bb_gain9: '20'
-    bw0: 2.4e6
+    bw0: samp_rate_sdr
     bw1: '0'
     bw10: '0'
     bw11: '0'

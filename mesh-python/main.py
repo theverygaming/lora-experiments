@@ -25,7 +25,8 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s: %(message)s", level=logging.DEBUG
     )
 
-    esplora_inst = esplora.ESPLora(host="10.40.128.33", port=8000)
+    # esplora_inst = esplora.ESPLoraWifi(host="10.40.128.33", port=8000)
+    esplora_inst = esplora.ESPLoraSerial("/dev/ttyACM0")
 
     # meshtastic_stuff(esplora_inst)
     meshcore_stuff(esplora_inst)

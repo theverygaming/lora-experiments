@@ -7,6 +7,7 @@
 #include <LittleFS.h>
 #include <config.h>
 #include <tcpserver.h>
+#include <blecon.h>
 
 #ifdef USE_RFM95
 #include <RadioRFM95.h>
@@ -36,6 +37,10 @@ void setup() {
         ESP.restart();
     }
     config_init();
+
+#ifdef USE_BLE
+    blecon_init();
+#endif
 
 #ifdef USE_WIFI
     tcpserver_init();
@@ -80,8 +85,14 @@ void setup() {
 
 void loop() {
     serialcon_poll();
+
 #ifdef USE_WIFI
     tcpserver_loop();
 #endif
+
+#ifdef USE_BLE
+    blecon_loop();
+#endif
+
     CMDConGlobal.process();
 }

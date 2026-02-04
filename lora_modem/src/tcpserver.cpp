@@ -24,7 +24,7 @@ void tcpserver_loop() {
         active_client = server.available();
         if (active_client && active_client.connected()) {
             LOG_INFO("new TCP client connected from %s", active_client.remoteIP().toString().c_str());
-            CMDConGlobal.set_stream(&active_client);
+            CMDConGlobal.set_stream(&active_client, nullptr);
         }
     }
 }
