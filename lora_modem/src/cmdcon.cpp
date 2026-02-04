@@ -26,9 +26,36 @@ void CMDCon::rx_hook(size_t psize) {
     }
 }
 
-void CMDCon::set_stream(Stream *s) {
-    LOG_DEBUG("set_stream");
-    this->stream = s;
+class DummyStream : public Stream {
+public:
+    DummyStream() {}
+    int available() override { return 0; }
+    int read() override { return -1; }
+    int peek() override { return -1; }
+    void flush() override {}
+    size_t write(uint8_t) override { return 1; }
+    size_t write(const uint8_t* buf, size_t size) override { return size; }
+} dummyStream;
+
+void CMDCon::set_stream(Stream *s, void (*unset_cb)()) {
+    if (this->stream == s) {
+        return;
+    }
+    LOG_DEBUG("set_stream %p, unset_cb %p", s, unset_cb);
+    if (this->stream_unset_cb != nullptr) {
+        LOG_DEBUG("calling stream_unset_cb");
+        this->stream_unset_cb();
+        this->stream_unset_cb = nullptr;
+    }
+    if (s != nullptr) {
+        this->stream = s;
+    } else {
+        // Setting the stream to nullptr from interrupt context while running can result in crashes
+        // this is because the function that uses the stream may have been interrupted and is far past it's stream == nullptr check!
+        // So we set it to a dummy stream instead tehee
+        this->stream = &dummyStream;
+    }
+    this->stream_unset_cb = unset_cb;
     radio->onReceive(rx_hook);
     radio->modeStandby();
     this->is_stby = true;

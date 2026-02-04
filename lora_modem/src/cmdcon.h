@@ -6,7 +6,7 @@
 
 class CMDCon {
 public:
-    void set_stream(Stream *s);
+    void set_stream(Stream *s, void (*unset_cb)());
     void process();
 private:
     static const size_t MAX_PACKET_LEN = 256;
@@ -23,6 +23,7 @@ private:
     Queue<struct QueuePacket, 10> rxQueue;
 
     Stream *stream = nullptr;
+    void (*stream_unset_cb)() = nullptr;
     void dump_packets();
     bool is_stby = true;
     static void rx_hook(size_t psize);
