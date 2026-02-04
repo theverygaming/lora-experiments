@@ -2,6 +2,7 @@
 #include <logging.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <variant.h>
 
 #if defined(ESP32)
 #include <WiFi.h>
