@@ -46,6 +46,20 @@
               cargo
               rustc
               maturin
+
+              # sdr-lora
+              (gnuradio.override {
+                extraPackages = [
+                  gnuradioPackages.lora_sdr
+                  gnuradioPackages.osmosdr
+                ];
+              })
+              (gnuradio.override {
+                extraPackages = [
+                  gnuradioPackages.lora_sdr
+                  gnuradioPackages.osmosdr
+                ];
+              }).pythonEnv
             ];
         };
       }
