@@ -15,8 +15,9 @@ void serialcon_init() {
     SERIALCON_SERIAL_PORT.begin(115200);
     // wait a few seconds for anything to connect, so the other side always gets all messages
     auto t = millis();
-    while (!SERIALCON_SERIAL_PORT && millis() - t < 1000*5) {
-        delay(100);
+    while (!SERIALCON_SERIAL_PORT && millis() - t < 1000 * 5) {
+        delay(10);
+        yield();
     }
     serialcon_cmd_mode = false;
 }
@@ -38,7 +39,6 @@ void serialcon_poll() {
         return;
     }
     if (SERIALCON_SERIAL_PORT.available()) {
-        LOG_DEBUG("entering serial CMD mode");
         serialcon_cmd_mode = true;
         CMDConGlobal.set_stream(
             &SERIALCON_SERIAL_PORT,
