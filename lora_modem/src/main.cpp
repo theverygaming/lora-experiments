@@ -84,6 +84,12 @@ void setup() {
 }
 
 void loop() {
+    static unsigned long prev_log = 0;
+    if (millis() - prev_log > 5 * 1000) {
+        prev_log = millis();
+        LOG_DEBUG("loop");
+    }
+
     serialcon_poll();
 
 #ifdef USE_WIFI
