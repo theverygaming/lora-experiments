@@ -35,9 +35,9 @@ public:
     bool setGain(unsigned short level) override;
     unsigned short getGain() override;
     unsigned short getGainMax() override;
-    bool setTxPower(unsigned short dbm) override;
-    unsigned short getTxPower() override;
-    unsigned short getTxPowerMax() override;
+    bool setTxPower(uint8_t dbm) override;
+    uint8_t getTxPower() override;
+    uint8_t getTxPowerMax() override;
     bool setFrequency(unsigned long frequencyHz) override;
     unsigned long getFrequency() override;
     bool setSpreadingFactor(unsigned short sf) override;
@@ -59,7 +59,7 @@ public:
 
 private:
     unsigned short _gain;
-    unsigned short _txp_dbm;
+    uint8_t _txp_dbm;
     unsigned long _frequency;
     unsigned short _sf;
     unsigned long _bw;

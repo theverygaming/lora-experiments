@@ -137,7 +137,7 @@ unsigned short RadioRFM95::getGainMax() {
     return 6;
 }
 
-bool RadioRFM95::setTxPower(unsigned short dbm) {
+bool RadioRFM95::setTxPower(uint8_t dbm) {
     if (dbm > 20) {
         dbm = 20;
     }
@@ -146,11 +146,11 @@ bool RadioRFM95::setTxPower(unsigned short dbm) {
     return true;
 }
 
-unsigned short RadioRFM95::getTxPower() {
+uint8_t RadioRFM95::getTxPower() {
     return this->_txp_dbm;
 }
 
-unsigned short RadioRFM95::getTxPowerMax() {
+uint8_t RadioRFM95::getTxPowerMax() {
     return 20;
 }
 
