@@ -54,10 +54,10 @@ public:
     // returns maximum gain value
     virtual unsigned short getGainMax();
     // set TX power in dBm
-    virtual bool setTxPower(unsigned short dbm);
-    virtual unsigned short getTxPower();
+    virtual bool setTxPower(uint8_t dbm);
+    virtual uint8_t getTxPower();
     // returns the maximum possible TX power in dBm
-    virtual unsigned short getTxPowerMax();
+    virtual uint8_t getTxPowerMax();
     // set the frequency in Hz
     virtual bool setFrequency(unsigned long frequencyHz);
     virtual unsigned long getFrequency();
