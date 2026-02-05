@@ -165,37 +165,55 @@ class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 void blecon_init() {
   LOG_DEBUG("initializing BLE");
   NimBLEDevice::init("NimBLE");
+  LOG_DEBUG("setPower");
   NimBLEDevice::setPower(3); /** +3db */
 
+  LOG_DEBUG("setSecurityAuth");
   NimBLEDevice::setSecurityAuth(
       true, true, false); /** bonding, MITM, don't need BLE secure connections
                              as we are using passkey pairing */
+  LOG_DEBUG("setSecurityPasskey");
   NimBLEDevice::setSecurityPasskey(BLE_DEFAULT_PAIRING_CODE);
+  LOG_DEBUG("setSecurityIOCap");
   NimBLEDevice::setSecurityIOCap(
       BLE_HS_IO_DISPLAY_ONLY); /** Display only passkey */
+  LOG_DEBUG("createServer");
   pServer = NimBLEDevice::createServer();
+  LOG_DEBUG("server setCallbacks");
   pServer->setCallbacks(&serverCallbacks);
+  LOG_DEBUG("createService");
   NimBLEService *pService = pServer->createService(UUID_SERVICE);
+  LOG_DEBUG("createCharacteristic");
   NimBLECharacteristic *pReadCharacteristic = pService->createCharacteristic(
       UUID_READ, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::READ_AUTHEN |
                      NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::NOTIFY);
+  LOG_DEBUG("createCharacteristic");
   NimBLECharacteristic *pWriteCharacteristic = pService->createCharacteristic(
       UUID_WRITE, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_AUTHEN |
                       NIMBLE_PROPERTY::WRITE_ENC);
-
+  
+  LOG_DEBUG("pService->start()");
   pService->start();
-
+  
+  LOG_DEBUG("setCallbacks read");
   pReadCharacteristic->setCallbacks(&chrCallbacks);
+  LOG_DEBUG("setCallbacks write");
   pWriteCharacteristic->setCallbacks(&chrCallbacks);
-
+  
+  LOG_DEBUG("getAdvertising");
   NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  LOG_DEBUG("advertising setName");
   pAdvertising->setName("lora_modem");
+  LOG_DEBUG("addServiceUUID");
   pAdvertising->addServiceUUID(pService->getUUID());
+  LOG_DEBUG("enableScanResponse");
   pAdvertising->enableScanResponse(
       true); // FIXME: should not be strictly required, removing this line
              // should save power
+  LOG_DEBUG("pAdvertising->start()");
   pAdvertising->start();
-
+  
+  LOG_DEBUG("BLEStream init");
   bleStream = new BLEStream(pReadCharacteristic, pWriteCharacteristic);
   LOG_DEBUG("BLE init done");
 }
