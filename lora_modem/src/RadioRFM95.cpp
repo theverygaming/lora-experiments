@@ -121,6 +121,9 @@ int RadioRFM95::rssi() {
 }
 
 bool RadioRFM95::setGain(unsigned short level) {
+    if (level > 6) {
+        level = 6;
+    }
     LoRa.setGain(level);
     this->_gain = level;
     return true;
@@ -135,6 +138,9 @@ unsigned short RadioRFM95::getGainMax() {
 }
 
 bool RadioRFM95::setTxPower(unsigned short dbm) {
+    if (dbm > 20) {
+        dbm = 20;
+    }
     LoRa.setTxPower(dbm);
     this->_txp_dbm = dbm;
     return true;
@@ -159,6 +165,11 @@ unsigned long RadioRFM95::getFrequency() {
 }
 
 bool RadioRFM95::setSpreadingFactor(unsigned short sf) {
+    if (sf > 12) {
+        sf = 12;
+    } else if (sf < 6) {
+        sf = 6;
+    }
     LoRa.setSpreadingFactor(sf);
     this->_sf = sf;
     return true;
@@ -169,6 +180,11 @@ unsigned short RadioRFM95::getSpreadingFactor() {
 }
 
 bool RadioRFM95::setSignalBandwidth(unsigned long sbw) {
+    if (sbw > 500000) {
+        sbw = 500000;
+    } else if (sbw < 7800) {
+        sbw = 7800;
+    }
     LoRa.setSignalBandwidth(sbw);
     this->_bw = sbw;
     return true;
@@ -179,6 +195,11 @@ unsigned long RadioRFM95::getSignalBandwidth() {
 }
 
 bool RadioRFM95::setCodingRate4(unsigned short denominator) {
+    if (denominator > 8) {
+        denominator = 8;
+    } else if (denominator < 5) {
+        denominator = 5;
+    }
     LoRa.setCodingRate4(denominator);
     this->_cr4 = denominator;
     return true;
