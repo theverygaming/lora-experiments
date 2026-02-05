@@ -181,7 +181,7 @@ class ESPLoraSerial(ESPLoraBase):
             while not self._rx_thread_stop.is_set():
                 sock = None
                 try:
-                    self._serial_port = serial.Serial(port=self._port, baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+                    self._serial_port = serial.Serial(port=self._port, baudrate=115200, bytesize=8, timeout=10, stopbits=serial.STOPBITS_ONE)
                     self._tx_data(self._settings_data)
                     while not self._rx_thread_stop.is_set():
                         line = self._serial_port.readline()
