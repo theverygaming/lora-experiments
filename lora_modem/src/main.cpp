@@ -95,4 +95,6 @@ void loop() {
 #endif
 
     CMDConGlobal.process();
+
+    delay(1);
 }
