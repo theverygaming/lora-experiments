@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -49,28 +50,39 @@ public:
 
     // LNA gain (0=AGC, then levels up to getGainMax())
     virtual bool setGain(unsigned short level);
+    virtual unsigned short getGain();
     // returns maximum gain value
     virtual unsigned short getGainMax();
     // set TX power in dBm
     virtual bool setTxPower(unsigned short dbm);
+    virtual unsigned short getTxPower();
     // returns the maximum possible TX power in dBm
     virtual unsigned short getTxPowerMax();
     // set the frequency in Hz
     virtual bool setFrequency(unsigned long frequencyHz);
+    virtual unsigned long getFrequency();
     // set the LoRa Spreading Factor
     virtual bool setSpreadingFactor(unsigned short sf);
+    virtual unsigned short getSpreadingFactor();
     // set the bandwidth in Hz
     virtual bool setSignalBandwidth(unsigned long sbw);
+    virtual unsigned long getSignalBandwidth();
     // set the Coding Rate (4/denominator)
     virtual bool setCodingRate4(unsigned short denominator);
+    virtual unsigned short getCodingRate4();
     // sets the preamble length in bits
     virtual bool setPreambleLength(unsigned short length);
+    virtual unsigned short getPreambleLength();
     // sets the sync word
     virtual bool setSyncWord(uint8_t sw);
+    virtual uint8_t getSyncWord();
     // set the CRC mode
     virtual bool setCRC(bool enabled);
+    virtual bool getCRC();
     // set the IQ inversion mode
     virtual bool setInvertIQ(bool enabled);
+    virtual bool getInvertIQ();
     // set the Low Data Rate Optimization mode
     virtual bool setLowDataRateOptimize(bool enabled);
+    virtual bool getLowDataRateOptimize();
 };

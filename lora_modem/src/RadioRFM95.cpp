@@ -122,7 +122,12 @@ int RadioRFM95::rssi() {
 
 bool RadioRFM95::setGain(unsigned short level) {
     LoRa.setGain(level);
+    this->_gain = level;
     return true;
+}
+
+unsigned short RadioRFM95::getGain() {
+    return this->_gain;
 }
 
 unsigned short RadioRFM95::getGainMax() {
@@ -131,7 +136,12 @@ unsigned short RadioRFM95::getGainMax() {
 
 bool RadioRFM95::setTxPower(unsigned short dbm) {
     LoRa.setTxPower(dbm);
+    this->_txp_dbm = dbm;
     return true;
+}
+
+unsigned short RadioRFM95::getTxPower() {
+    return this->_txp_dbm;
 }
 
 unsigned short RadioRFM95::getTxPowerMax() {
@@ -140,32 +150,62 @@ unsigned short RadioRFM95::getTxPowerMax() {
 
 bool RadioRFM95::setFrequency(unsigned long frequencyHz) {
     LoRa.setFrequency(frequencyHz);
+    this->_frequency = frequencyHz;
     return true;
+}
+
+unsigned long RadioRFM95::getFrequency() {
+    return this->_frequency;
 }
 
 bool RadioRFM95::setSpreadingFactor(unsigned short sf) {
     LoRa.setSpreadingFactor(sf);
+    this->_sf = sf;
     return true;
+}
+
+unsigned short RadioRFM95::getSpreadingFactor() {
+    return this->_sf;
 }
 
 bool RadioRFM95::setSignalBandwidth(unsigned long sbw) {
     LoRa.setSignalBandwidth(sbw);
+    this->_bw = sbw;
     return true;
+}
+
+unsigned long RadioRFM95::getSignalBandwidth() {
+    return this->_bw;
 }
 
 bool RadioRFM95::setCodingRate4(unsigned short denominator) {
     LoRa.setCodingRate4(denominator);
+    this->_cr4 = denominator;
     return true;
+}
+
+unsigned short RadioRFM95::getCodingRate4() {
+    return this->_cr4;
 }
 
 bool RadioRFM95::setPreambleLength(unsigned short length) {
     LoRa.setPreambleLength(length);
+    this->_preamble_len = length;
     return true;
+}
+
+unsigned short RadioRFM95::getPreambleLength() {
+    return this->_preamble_len;
 }
 
 bool RadioRFM95::setSyncWord(uint8_t sw) {
     LoRa.setSyncWord(sw);
+    this->_syncword = sw;
     return true;
+}
+
+uint8_t RadioRFM95::getSyncWord() {
+    return this->_syncword;
 }
 
 bool RadioRFM95::setCRC(bool enabled) {
@@ -174,7 +214,12 @@ bool RadioRFM95::setCRC(bool enabled) {
     } else {
         LoRa.disableCrc();
     }
+    this->_crc = enabled;
     return true;
+}
+
+bool RadioRFM95::getCRC() {
+    return this->_crc;
 }
 
 bool RadioRFM95::setInvertIQ(bool enabled) {
@@ -183,7 +228,12 @@ bool RadioRFM95::setInvertIQ(bool enabled) {
     } else {
         LoRa.disableInvertIQ();
     }
+    this->_invert_iq = enabled;
     return true;
+}
+
+bool RadioRFM95::getInvertIQ() {
+    return this->_invert_iq;
 }
 
 bool RadioRFM95::setLowDataRateOptimize(bool enabled) {
@@ -192,5 +242,10 @@ bool RadioRFM95::setLowDataRateOptimize(bool enabled) {
     } else {
         LoRa.disableLowDataRateOptimize();
     }
+    this->_low_data_rate_optimize = enabled;
     return true;
+}
+
+bool RadioRFM95::getLowDataRateOptimize() {
+    return this->_low_data_rate_optimize;
 }
