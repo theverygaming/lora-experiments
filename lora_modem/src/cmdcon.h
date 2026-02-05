@@ -27,6 +27,7 @@ private:
     void (*stream_unset_cb)() = nullptr;
     void dump_packets();
     bool is_stby = true;
+    uint8_t radio_implicit_len = 0;
     static void rx_hook(size_t psize);
     void set_rx_mode();
     unsigned long prev_telem = 0;
@@ -48,8 +49,11 @@ private:
     static const uint8_t CMD_TXPOWER = 0x03;
     static const uint8_t CMD_SF = 0x04;
     static const uint8_t CMD_CR = 0x05;
+    static const uint8_t CMD_RADIO_STATE = 0x06;
     // [...]
     static const uint8_t CMD_DETECT = 0x08;
+    static const uint8_t CMD_IMPLICIT = 0x09;
+    static const uint8_t CMD_LEAVE = 0x0A;
 
     static const uint8_t DETECT_REQ = 0x73;
     static const uint8_t DETECT_RESP = 0x46;

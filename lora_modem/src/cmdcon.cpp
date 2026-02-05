@@ -59,6 +59,7 @@ void CMDCon::set_stream(Stream *s, void (*unset_cb)()) {
     radio->onReceive(rx_hook);
     radio->modeStandby();
     this->is_stby = true;
+    radio_implicit_len = 0;
 }
 
 void CMDCon::process() {
@@ -183,9 +184,30 @@ void CMDCon::process() {
                 }
                 break;
             }
-            // TODO: CMD_IMPLICIT
-            // TODO: CMD_LEAVE
-            // TODO: CMD_RADIO_STATE
+            case CMD_IMPLICIT: {
+                if (frame_len == 1) {
+                    radio_implicit_len = kiss_buf[0]; // 0 = disabled
+                    kiss_cmd_resp(CMD_IMPLICIT, &radio_implicit_len, sizeof(radio_implicit_len));
+                }
+                break;
+            }
+            case CMD_LEAVE: {
+                if (frame_len == 1 && kiss_buf[0] == 0xFF) {
+                    // TODO: do stuff on leave?
+                }
+                break;
+            }
+            case CMD_RADIO_STATE: {
+                if (frame_len == 1) {
+                    if (kiss_buf[0] != 0xFF) { // 0xFF is for reading
+                        is_stby = kiss_buf[0] != 0x01;
+                        set_rx_mode();
+                    }
+                    uint8_t rstate = is_stby ? 0x00 : 0x01;
+                    kiss_cmd_resp(CMD_RADIO_STATE, &rstate, sizeof(rstate));
+                }
+                break;
+            }
             // TODO: CMD_ST_ALOCK
             // TODO: CMD_LT_ALOCK
             // TODO: CMD_STAT_RX
@@ -272,7 +294,7 @@ void CMDCon::dump_packets() {
 
 void CMDCon::set_rx_mode() {
     if (!this->is_stby) {
-        radio->modeContinousReceive();
+        radio->modeContinousReceive(radio_implicit_len);
     } else {
         radio->modeStandby();
     }
