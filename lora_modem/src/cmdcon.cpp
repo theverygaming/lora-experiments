@@ -5,6 +5,7 @@
 #include <main.h>
 #include <variant.h>
 #include <config.h>
+#include <endian.h>
 
 CMDCon CMDConGlobal;
 
@@ -129,26 +130,22 @@ void CMDCon::process() {
             }
             case CMD_FREQUENCY: {
                 if (frame_len == 4) {
-                    // !! endianness
-                    unsigned long freq = *((uint32_t *)kiss_buf);
+                    unsigned long freq = BE_32(*((uint32_t *)kiss_buf));
                     if (freq != 0) { // freq = 0 is for reading
                         radio->setFrequency(freq);
                     }
-                    // !! endianness
-                    uint32_t freq_read = radio->getFrequency();
+                    uint32_t freq_read = BE_32(radio->getFrequency());
                     kiss_cmd_resp(CMD_FREQUENCY, &freq_read, sizeof(freq_read));
                 }
                 break;
             }
             case CMD_BANDWIDTH: {
                 if (frame_len == 4) {
-                    // !! endianness
-                    unsigned long bw = *((uint32_t *)kiss_buf);
+                    unsigned long bw = BE_32(*((uint32_t *)kiss_buf));
                     if (bw != 0) { // bw = 0 is for reading
                         radio->setSignalBandwidth(bw);
                     }
-                    // !! endianness
-                    uint32_t bw_read = radio->getSignalBandwidth();
+                    uint32_t bw_read = BE_32(radio->getSignalBandwidth());
                     kiss_cmd_resp(CMD_BANDWIDTH, &bw_read, sizeof(bw_read));
                 }
                 break;
