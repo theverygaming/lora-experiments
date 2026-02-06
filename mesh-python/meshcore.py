@@ -16,13 +16,17 @@ _logger = logging.getLogger(__name__)
 MAX_PATH_SIZE = 64
 MAX_PACKET_PAYLOAD = 184
 
-class RouteType(enum.Enum):
+class JSONEnum(enum.Enum):
+    def key_to_json(self):
+        return self.name
+
+class RouteType(JSONEnum):
     TRANSPORT_FLOOD = 0x0
     FLOOD = 0x1
     DIRECT = 0x2
     TRANSPORT_DIRECT = 0x3
 
-class PayloadType(enum.Enum):
+class PayloadType(JSONEnum):
     REQ = 0x0
     RESPONSE = 0x1
     TXT_MSG = 0x2
@@ -44,19 +48,40 @@ class PayloadType(enum.Enum):
             value = 0xC
         return super().__call__(cls, value)
 
-class PayloadVersion(enum.Enum):
+class PayloadVersion(JSONEnum):
     V0 = 0x0
     FUTURE_V1 = 0x1 
     FUTURE_V2 = 0x2
     FUTURE_v3 = 0x3
 
-class AdvertNodeType(enum.Enum):
+class AdvertNodeType(JSONEnum):
     CHAT_NODE = 0x1
     REPEATER = 0x2
     ROOM_SERVER = 0x3
     SENSOR = 0x4
 
-class Payload:
+@dataclasses.dataclass
+class MeshcoreDataclass:
+    def _serialize_dict_value(self, key, value):
+        if isinstance(value, MeshcoreDataclass):
+            return value.serialize_dict()
+        if isinstance(value, bytes):
+            return list(value)
+        if isinstance(value, datetime.datetime):
+            return value.isoformat()
+        if isinstance(value, JSONEnum):
+            return value.key_to_json()
+        return value
+
+    def serialize_dict(self) -> dict:
+        out = {}
+        for k, v in dataclasses.asdict(self).items():
+            out[k] = self._serialize_dict_value(k, v)
+        return out
+    
+
+@dataclasses.dataclass
+class Payload(MeshcoreDataclass):
     @classmethod
     def deserialize(cls, data: bytes) -> Self:
         raise NotImplementedError()
@@ -206,7 +231,7 @@ class PayloadAdvert(Payload):
 
 
 @dataclasses.dataclass
-class MeshcorePacket:
+class MeshcorePacket(MeshcoreDataclass):
     route_type: RouteType
     payload_type: PayloadType
     payload_version: PayloadVersion
