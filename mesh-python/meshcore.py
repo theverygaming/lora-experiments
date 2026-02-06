@@ -78,12 +78,30 @@ class MeshcoreDataclass:
         for k, v in dataclasses.asdict(self).items():
             out[k] = self._serialize_dict_value(k, v)
         return out
+
+
+class MeshcoreNode:
+    def __init__(self):
+        pass
     
+    def get_channels(self) -> dict[str, bytes]:
+        def _hashtag_key(name: str) -> bytes:
+            sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
+            sha256hash.update(name.lower().encode("utf-8"))
+            sha256_key = sha256hash.finalize()
+            return sha256_key[:16]
+
+        return {
+            "Public": bytes.fromhex("8b3387e9c5cdea6ac9e5edbaa115cd72"),
+            "#test": _hashtag_key("#test"),
+            "#ping": _hashtag_key("#ping"),
+        }
+
 
 @dataclasses.dataclass
 class Payload(MeshcoreDataclass):
     @classmethod
-    def deserialize(cls, data: bytes) -> Self:
+    def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
         raise NotImplementedError()
 
     def serialize(self) -> bytes:
@@ -94,7 +112,7 @@ class PayloadRaw(Payload):
     data: bytes
 
     @classmethod
-    def deserialize(cls, data: bytes) -> Self:
+    def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
         return cls(data)
 
     def serialize(self) -> bytes:
@@ -103,24 +121,20 @@ class PayloadRaw(Payload):
 
 @dataclasses.dataclass
 class PayloadGroupText(Payload):
-    channel: str
+    channel_name: str
     timestamp: datetime.datetime
     sender_name: str
     message: str
 
     @classmethod
-    def deserialize(cls, data: bytes) -> Self:
+    def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
         channel_hash = int(data[0])
         cipher_mac = data[1:3]
         ciphertext = data[3:]
 
         _logger.debug("channel_hash: %s, cipher_mac: %s, ciphertext: %s", channel_hash, cipher_mac, ciphertext)
 
-        CHANNELS = {
-            "Public": bytes.fromhex("8b3387e9c5cdea6ac9e5edbaa115cd72"),
-        }
-
-        for name, key in CHANNELS.items():
+        for name, key in node.get_channels().items():
             if len(key) != 16:
                 raise Exception(f"channel key is {len(key)} bytes - not 16 bytes")
             sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
@@ -153,7 +167,7 @@ class PayloadGroupText(Payload):
                 full_msg_split = full_msg.split(": ", maxsplit=1)
 
                 kwargs = {
-                    "channel": name,
+                    "channel_name": name,
                     "timestamp": datetime.datetime.fromtimestamp(timestamp),
                     "sender_name": full_msg_split[0],
                     "message": full_msg_split[1],
@@ -171,7 +185,7 @@ class PayloadAdvert(Payload):
     name: str | None
 
     @classmethod
-    def deserialize(cls, data: bytes) -> Self:
+    def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
         def _verify_signature(data, pubkey, signature):
             data_nokey = bytearray(data)
             # signing happens without the pubkey present in the message
@@ -241,7 +255,7 @@ class MeshcorePacket(MeshcoreDataclass):
     payload: Payload
 
     @classmethod
-    def deserialize(cls, data: bytes) -> Self:
+    def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
         # https://github.com/meshcore-dev/MeshCore/blob/6b52fb32301c273fc78d96183501eb23ad33c5bb/docs/packet_structure.md
         kwargs = {}
 
@@ -284,20 +298,21 @@ class MeshcorePacket(MeshcoreDataclass):
         }
 
         try:
-            kwargs["payload"] = PAYLOAD_CLASS_LOOKUP.get(kwargs["payload_type"], PayloadRaw).deserialize(payload_bytes)
+            kwargs["payload"] = PAYLOAD_CLASS_LOOKUP.get(kwargs["payload_type"], PayloadRaw).deserialize(node, payload_bytes)
         except:
             _logger.exception("error deserializing")
-            kwargs["payload"] = PayloadRaw.deserialize(payload_bytes)
+            kwargs["payload"] = PayloadRaw.deserialize(node, payload_bytes)
 
         return cls(**kwargs)
 
 class Meshcore:
-    def __init__(self, modem: lora_modem.LoraModem):
+    def __init__(self, modem: lora_modem.LoraModem, node: MeshcoreNode):
         self._modem = modem
+        self._node = node
 
     def start(self):
         def rx_cb(p):
-            _logger.debug("deserialized: %s", MeshcorePacket.deserialize(p.data))
+            _logger.debug("deserialized: %s", MeshcorePacket.deserialize(self._node, p.data))
             # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
             repeat_full_pwr = p.rssi > -80
             try:
