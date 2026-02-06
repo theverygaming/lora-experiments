@@ -9,6 +9,7 @@ import cryptography.hazmat.primitives.ciphers
 import cryptography.hazmat.primitives.hashes
 import cryptography.hazmat.primitives.hmac
 import cryptography.hazmat.primitives.constant_time
+import cryptography.hazmat.primitives.asymmetric.ed25519
 
 _logger = logging.getLogger(__name__)
 
@@ -48,6 +49,12 @@ class PayloadVersion(enum.Enum):
     FUTURE_V1 = 0x1 
     FUTURE_V2 = 0x2
     FUTURE_v3 = 0x3
+
+class AdvertNodeType(enum.Enum):
+    CHAT_NODE = 0x1
+    REPEATER = 0x2
+    ROOM_SERVER = 0x3
+    SENSOR = 0x4
 
 class Payload:
     @classmethod
@@ -130,6 +137,73 @@ class PayloadGroupText(Payload):
 
         raise Exception("could not decrypt")
 
+@dataclasses.dataclass
+class PayloadAdvert(Payload):
+    pubkey: bytes
+    timestamp: datetime.datetime
+    lat_lon: tuple[float, float] | None
+    node_type: AdvertNodeType
+    name: str | None
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> Self:
+        def _verify_signature(data, pubkey, signature):
+            data_nokey = bytearray(data)
+            # signing happens without the pubkey present in the message
+            # https://github.com/meshcore-dev/MeshCore/blob/10067ada182e8fccd61406bb6c2e036c33d92e09/src/Mesh.cpp#L420-L428
+            data_nokey[32 + 4:32 + 4 + 64] = []
+            public_key = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.from_public_bytes(pubkey)
+            public_key.verify(signature, data_nokey)
+
+        kwargs = {}
+        byte_idx = 0
+
+        kwargs["pubkey"] = data[byte_idx:byte_idx+32]
+        byte_idx += 32
+
+        kwargs["timestamp"] = datetime.datetime.fromtimestamp(struct.unpack_from("<I", data[byte_idx:byte_idx+4])[0])
+        byte_idx += 4
+
+        signature = data[byte_idx:byte_idx+64]
+        byte_idx += 64
+
+        flags = data[byte_idx]
+        byte_idx += 1
+
+        # lower nibble of flags -> node type (0-15)
+        # https://github.com/meshcore-dev/MeshCore/blob/10067ada182e8fccd61406bb6c2e036c33d92e09/src/helpers/AdvertDataHelpers.h#L7-L12
+        kwargs["node_type"] = AdvertNodeType(flags & 0xF)
+
+        # https://github.com/meshcore-dev/MeshCore/blob/10067ada182e8fccd61406bb6c2e036c33d92e09/src/helpers/AdvertDataHelpers.h#L14-L17
+        LATLON_MASK = 0x10
+        FEAT1_MASK = 0x20
+        FEAT2_MASK = 0x40
+        NAME_MASK = 0x80
+
+        if (flags & LATLON_MASK) != 0:
+            lat = struct.unpack_from("<I", data[byte_idx:byte_idx+4])[0]
+            byte_idx += 4
+            lon = struct.unpack_from("<I", data[byte_idx:byte_idx+4])[0]
+            byte_idx += 4
+            kwargs["lat_lon"] = (lat / 1000000, lon / 1000000)
+        else:
+            kwargs["lat_lon"] = None
+
+        if (flags & FEAT1_MASK) != 0:
+            byte_idx += 2
+        
+        if (flags & FEAT2_MASK) != 0:
+            byte_idx += 2
+        
+        if (flags & NAME_MASK) != 0:
+            kwargs["name"] = data[byte_idx:].decode("utf-8")
+        else:
+            kwargs["name"] = None
+        
+        _verify_signature(data, kwargs["pubkey"], signature)
+
+        return cls(**kwargs)
+
 
 @dataclasses.dataclass
 class MeshcorePacket:
@@ -180,6 +254,7 @@ class MeshcorePacket:
             raise Exception("MAX_PACKET_PAYLOAD exceeded")
         
         PAYLOAD_CLASS_LOOKUP = {
+            PayloadType.ADVERT: PayloadAdvert,
             PayloadType.GRP_TXT: PayloadGroupText,
         }
 
