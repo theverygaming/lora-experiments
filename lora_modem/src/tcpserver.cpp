@@ -21,7 +21,7 @@ void tcpserver_init() {
 
 void tcpserver_loop() {
     if (!active_client || !active_client.connected()) {
-        active_client = server.available();
+        active_client = server.accept();
         if (active_client && active_client.connected()) {
             LOG_INFO("new TCP client connected from %s", active_client.remoteIP().toString().c_str());
             CMDConGlobal.set_stream(&active_client, nullptr);
