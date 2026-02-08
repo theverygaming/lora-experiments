@@ -20,6 +20,7 @@ void serialcon_init() {
         yield();
     }
     serialcon_cmd_mode = false;
+    delay(3000); // wait a bit to ensure we don't print anything before the connection is 100% fine
 }
 
 void serialcon_print(const char *str) {

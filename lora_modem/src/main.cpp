@@ -30,8 +30,11 @@ void setup() {
 #endif
     serialcon_init();
     LOG_INFO("hi from lora_modem!");
-
+#if defined(ESP32)
     if(!LittleFS.begin(true /* formatOnFail */)) {
+#elif defined(ARDUINO_ARCH_ESP8266)
+    if(!LittleFS.begin()) {
+#endif
         LOG_ERROR("could not initialize LittleFS, rebooting in 10s");
         delay(10*1000);
         ESP.restart();
