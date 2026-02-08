@@ -10,6 +10,7 @@ import cryptography.hazmat.primitives.hashes
 import cryptography.hazmat.primitives.hmac
 import cryptography.hazmat.primitives.constant_time
 import cryptography.hazmat.primitives.asymmetric.ed25519
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -316,6 +317,7 @@ class Meshcore:
             # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
             repeat_full_pwr = p.rssi > -80
             try:
+                time.sleep(0.1)
                 if repeat_full_pwr:
                     _logger.debug("repeating this packet with full power")
                     self._modem.set_tx_power(20)
