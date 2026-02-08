@@ -1,6 +1,7 @@
 #include <tcpserver.h>
 #include <logging.h>
 #include <cmdcon.h>
+#include <variant.h>
 
 #ifdef USE_WIFI
 #if defined(ESP32)
