@@ -21,6 +21,16 @@ void tcpserver_init() {
 }
 
 void tcpserver_loop() {
+    static int wifi_status = -1;
+    if (wifi_status != WiFi.status()) {
+        wifi_status = WiFi.status();
+        unsigned long v4 = WiFi.localIP().v4();
+        unsigned int v4_1 = v4 & 0xFF;
+        unsigned int v4_2 = (v4 >> 8) & 0xFF;
+        unsigned int v4_3 = (v4 >> 16) & 0xFF;
+        unsigned int v4_4 = (v4 >> 24) & 0xFF;
+        LOG_DEBUG("wifi status changed to %d IPv4: %u.%u.%u.%u", wifi_status, v4_1, v4_2, v4_3, v4_4);
+    }
     if (!active_client || !active_client.connected()) {
         active_client = server.accept();
         if (active_client && active_client.connected()) {
