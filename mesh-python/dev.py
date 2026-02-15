@@ -26,8 +26,8 @@ def meshcore_stuff(esplora_inst):
         # trace
         "260334F6E3AA57517E0000000000D026B326D0",
     ]
-    for pkt in pkts:
-        _logger.info("decoded: %s", meshcore.MeshcorePacket.deserialize(node, bytes.fromhex(pkt)))
+    #for pkt in pkts:
+        #_logger.info("decoded: %s", meshcore.MeshcorePacket.deserialize(node, bytes.fromhex(pkt)))
     meshcore_inst = meshcore.Meshcore(esplora_inst, node)
     meshcore_inst.start()
 
@@ -36,8 +36,8 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s: %(message)s", level=logging.DEBUG
     )
 
-    # esplora_inst = esplora.ESPLoraWifi(host="10.40.128.33", port=8000)
-    esplora_inst = esplora.ESPLoraSerial("/dev/ttyACM0")
+    esplora_inst = esplora.ESPLoraWifi(host="10.40.189.193", port=8000)
+    # esplora_inst = esplora.ESPLoraSerial("/dev/ttyACM0")
 
     # meshtastic_stuff(esplora_inst)
     meshcore_stuff(esplora_inst)
