@@ -251,7 +251,6 @@ class MeshcorePacket(MeshcoreDataclass):
     payload_type: PayloadType
     payload_version: PayloadVersion
     transport_codes: list[int] | None
-    path_len: int
     path: list[int]
     payload: Payload
 
@@ -278,14 +277,14 @@ class MeshcorePacket(MeshcoreDataclass):
             byte_idx += 4
 
         # path len
-        kwargs["path_len"] = int(data[byte_idx])
+        path_len = int(data[byte_idx])
         byte_idx += 1
 
         # path
-        if kwargs["path_len"] > MAX_PATH_SIZE:
+        if path_len > MAX_PATH_SIZE:
             raise Exception("MAX_PATH_SIZE exceeded")
         kwargs["path"] = []
-        for _ in range(kwargs["path_len"]):
+        for _ in range(path_len):
             kwargs["path"].append(int(data[byte_idx]))
             byte_idx += 1
 
