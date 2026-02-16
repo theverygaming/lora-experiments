@@ -9,7 +9,7 @@ import json
 import random
 import uuid
 import google.protobuf.json_format
-import lora_modem
+from . import lora_modem
 
 
 _logger = logging.getLogger(__name__)

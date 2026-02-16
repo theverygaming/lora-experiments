@@ -1,10 +1,12 @@
+# python -m mesh-python.dev
+# while [ true ]; do python -m mesh-python.dev 2>&1 | tee -a mesh-python/mesh-python.log; done
 import time
 import json
-import esplora
-import meshtastic_dm
 import logging
-import lora_modem
-import meshcore
+from . import esplora
+from . import meshtastic_dm
+from . import lora_modem
+from . import meshcore
 
 _logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ def meshtastic_stuff(esplora_inst):
     meshtastic_inst.start()
 
 def meshcore_stuff(esplora_inst):
-    node = meshcore.MeshcoreNode()
+    node = meshcore.meshcore.MeshcoreNode()
     pkts = [
         # group msg in #test
         "150D498F8642DE3C33CCAB4EBAA028D937E5DB6B97E1D456C81BCE119EA8DAF177E7D3FCE230EF298C56C2E06C942D1506E4D45D09846BB525FD3D5673B39660F94AFAEBF3CC70BE2C680ABD1C85A2BD643F44949B9748CC80228B6F4F79AABDB2AB8104882BD70367DD24CDD6D091A1B506",
@@ -27,8 +29,8 @@ def meshcore_stuff(esplora_inst):
         "260334F6E3AA57517E0000000000D026B326D0",
     ]
     #for pkt in pkts:
-        #_logger.info("decoded: %s", meshcore.MeshcorePacket.deserialize(node, bytes.fromhex(pkt)))
-    meshcore_inst = meshcore.Meshcore(esplora_inst, node)
+        #_logger.info("decoded: %s", meshcore.meshcore.MeshcorePacket.deserialize(node, bytes.fromhex(pkt)))
+    meshcore_inst = meshcore.meshcore.Meshcore(esplora_inst, node)
     meshcore_inst.start()
 
 if __name__ == "__main__":

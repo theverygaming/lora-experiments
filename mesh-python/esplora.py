@@ -3,7 +3,7 @@ import datetime
 import threading
 import json
 import socket
-import lora_modem
+from . import lora_modem
 import time
 import serial
 

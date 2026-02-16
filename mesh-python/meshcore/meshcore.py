@@ -1,5 +1,4 @@
 import logging
-import lora_modem
 import struct
 import enum
 import dataclasses
@@ -11,6 +10,7 @@ import cryptography.hazmat.primitives.hmac
 import cryptography.hazmat.primitives.constant_time
 import cryptography.hazmat.primitives.asymmetric.ed25519
 import time
+from .. import lora_modem
 
 _logger = logging.getLogger(__name__)
 
