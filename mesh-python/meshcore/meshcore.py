@@ -4,6 +4,7 @@ import enum
 import dataclasses
 from typing import Self
 import datetime
+import queue
 import cryptography.hazmat.primitives.ciphers
 import cryptography.hazmat.primitives.hashes
 import cryptography.hazmat.primitives.hmac
@@ -84,7 +85,7 @@ class MeshcoreDataclass:
 class MeshcoreNode:
     def __init__(self):
         pass
-    
+
     def get_channels(self) -> dict[str, bytes]:
         def _hashtag_key(name: str) -> bytes:
             sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
@@ -306,39 +307,37 @@ class MeshcorePacket(MeshcoreDataclass):
         return cls(**kwargs)
 
 class Meshcore:
-    def __init__(self, modem: lora_modem.LoraModem, node: MeshcoreNode):
-        self._modem = modem
-        self._node = node
+    def __init__(self, modem: lora_modem.LoraModem, node: MeshcoreNode, received_msg_queue: queue.SimpleQueue | None = None):
+        self.modem = modem
+        self.node = node
+        self._received_msg_queue = received_msg_queue
 
     def start(self):
         def rx_cb(p):
-            _logger.debug("deserialized: %s", MeshcorePacket.deserialize(self._node, p.data))
+            packet = MeshcorePacket.deserialize(self.node, p.data)
+            _logger.debug("deserialized: %s", packet)
+            if self._received_msg_queue is not None:
+                self._received_msg_queue.put(packet)
             # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
             repeat_full_pwr = p.rssi > -80
             try:
                 time.sleep(0.1)
                 if repeat_full_pwr:
                     _logger.debug("repeating this packet with full power")
-                    self._modem.set_tx_power(20)
-                self._modem.tx(p)
+                    self.modem.set_tx_power(20)
+                self.modem.tx(p)
             finally:
                 if repeat_full_pwr:
-                    self._modem.set_tx_power(0)
-        self._modem.start(rx_cb)
+                    self.modem.set_tx_power(0)
+        self.modem.start(rx_cb)
         # EU/UK (Narrow) preset
-        self._modem.set_gain(0) # AGC
-        self._modem.set_frequency(869618000)
-        self._modem.set_spreading_factor(8)
-        self._modem.set_bandwidth(62500)
-        self._modem.set_coding_rate(8)
-        self._modem.set_preamble_length(16)
-        self._modem.set_syncword(0x12) # Meshcore (RADIOLIB_SX126X_SYNC_WORD_PRIVATE)
-        self._modem.set_tx_power(0) # don't wanna annoy anyone with my silly packets rn # TODO: more power when this works properly
-        self._modem.set_aux_lora_settings(
+        self.modem.set_preamble_length(16)
+        self.modem.set_syncword(0x12) # Meshcore (RADIOLIB_SX126X_SYNC_WORD_PRIVATE)
+        self.modem.set_aux_lora_settings(
             crc=True,
             invert_iq=False,
             low_data_rate_optimize=False,
         )
 
     def stop(self):
-        self._modem.stop()
+        self.modem.stop()

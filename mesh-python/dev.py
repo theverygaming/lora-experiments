@@ -30,6 +30,10 @@ def meshcore_stuff(esplora_inst):
     ]
     #for pkt in pkts:
         #_logger.info("decoded: %s", meshcore.meshcore.MeshcorePacket.deserialize(node, bytes.fromhex(pkt)))
+    esplora_inst.set_frequency(869618000)
+    esplora_inst.set_spreading_factor(8)
+    esplora_inst.set_bandwidth(62500)
+    esplora_inst.set_coding_rate(8)
     meshcore_inst = meshcore.meshcore.Meshcore(esplora_inst, node)
     meshcore_inst.start()
 
