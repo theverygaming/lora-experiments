@@ -170,7 +170,7 @@ class PayloadGroupText(Payload):
 
                 kwargs = {
                     "channel_name": name,
-                    "timestamp": datetime.datetime.fromtimestamp(timestamp),
+                    "timestamp": datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc),
                     "sender_name": full_msg_split[0],
                     "message": full_msg_split[1],
                 }
@@ -202,7 +202,7 @@ class PayloadAdvert(Payload):
         kwargs["pubkey"] = data[byte_idx:byte_idx+32]
         byte_idx += 32
 
-        kwargs["timestamp"] = datetime.datetime.fromtimestamp(struct.unpack_from("<I", data[byte_idx:byte_idx+4])[0])
+        kwargs["timestamp"] = datetime.datetime.fromtimestamp(struct.unpack_from("<I", data[byte_idx:byte_idx+4])[0], tz=datetime.timezone.utc)
         byte_idx += 4
 
         signature = data[byte_idx:byte_idx+64]
