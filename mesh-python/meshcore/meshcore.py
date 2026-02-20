@@ -83,21 +83,23 @@ class MeshcoreDataclass:
 
 
 class MeshcoreNode:
-    def __init__(self):
-        pass
+    def __init__(self, channels = None):
+        self.channels = channels
+        if self.channels is None:
+            def _hashtag_key(name: str) -> bytes:
+                sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
+                sha256hash.update(name.lower().encode("utf-8"))
+                sha256_key = sha256hash.finalize()
+                return sha256_key[:16]
+
+            self.channels = {
+                "Public": bytes.fromhex("8b3387e9c5cdea6ac9e5edbaa115cd72"),
+                "#test": _hashtag_key("#test"),
+                "#ping": _hashtag_key("#ping"),
+            }
 
     def get_channels(self) -> dict[str, bytes]:
-        def _hashtag_key(name: str) -> bytes:
-            sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
-            sha256hash.update(name.lower().encode("utf-8"))
-            sha256_key = sha256hash.finalize()
-            return sha256_key[:16]
-
-        return {
-            "Public": bytes.fromhex("8b3387e9c5cdea6ac9e5edbaa115cd72"),
-            "#test": _hashtag_key("#test"),
-            "#ping": _hashtag_key("#ping"),
-        }
+        return self.channels
 
 
 @dataclasses.dataclass
