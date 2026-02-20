@@ -125,7 +125,7 @@ class PayloadRaw(Payload):
 
 @dataclasses.dataclass
 class PayloadGroupText(Payload):
-    channel_name: str
+    channel_key: object
     timestamp: datetime.datetime
     sender_name: str
     message: str
@@ -138,7 +138,7 @@ class PayloadGroupText(Payload):
 
         _logger.debug("channel_hash: %s, cipher_mac: %s, ciphertext: %s", channel_hash, cipher_mac, ciphertext)
 
-        for name, key in node.get_channels().items():
+        for channel_key, key in node.get_channels().items():
             if len(key) != 16:
                 raise Exception(f"channel key is {len(key)} bytes - not 16 bytes")
             sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
@@ -171,7 +171,7 @@ class PayloadGroupText(Payload):
                 full_msg_split = full_msg.split(": ", maxsplit=1)
 
                 kwargs = {
-                    "channel_name": name,
+                    "channel_key": channel_key,
                     "timestamp": datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc),
                     "sender_name": full_msg_split[0],
                     "message": full_msg_split[1],
