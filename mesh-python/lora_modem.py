@@ -12,12 +12,21 @@ class LoraPacketReceived(LoraPacket):
 
 class LoraModem:
     def start(self, rx_cb):
+        self._start(rx_cb)
+
+    def _start(self, rx_cb):
         raise NotImplementedError()
 
     def stop(self):
+        self._stop()
+
+    def _stop(self):
         raise NotImplementedError()
 
     def tx(self, p: LoraPacket):
+        self._tx(p)
+
+    def _tx(self, p: LoraPacket):
         raise NotImplementedError()
 
     def set_gain(self, gain: int):

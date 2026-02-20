@@ -17,12 +17,12 @@ class ESPLoraBase(lora_modem.LoraModem):
         }
         self._running = False
         self._rx_cb = None
-    
-    def start(self, rx_cb):
+
+    def _start(self, rx_cb):
         self._running = True
         self._rx_cb = rx_cb
 
-    def stop(self):
+    def _stop(self):
         self._running = False
         self._rx_cb = None
 
@@ -46,7 +46,7 @@ class ESPLoraBase(lora_modem.LoraModem):
         except:
             _logger.exception("rx_cb exception")
 
-    def tx(self, p: lora_modem.LoraPacket):
+    def _tx(self, p: lora_modem.LoraPacket):
         data = {
             "type": "packetTx",
             "data": list(p.data),
@@ -127,7 +127,7 @@ class ESPLoraWifi(ESPLoraBase):
         self._sockfile.write(json.dumps(data) + "\n")
         self._sockfile.flush()
 
-    def start(self, rx_cb):
+    def _start(self, rx_cb):
         def _conn_thread():
             while not self._rx_thread_stop.is_set():
                 sock = None
@@ -155,12 +155,12 @@ class ESPLoraWifi(ESPLoraBase):
         self._rx_thread_stop = threading.Event()
         self._rx_thread = threading.Thread(target=_conn_thread)
         self._rx_thread.start()
-        super().start(rx_cb)
+        super()._start(rx_cb)
 
-    def stop(self):
+    def _stop(self):
         self._rx_thread_stop.set()
         self._rx_thread.join()
-        super().stop()
+        super()._stop()
 
 class ESPLoraSerial(ESPLoraBase):
     def __init__(self, port):
@@ -176,7 +176,7 @@ class ESPLoraSerial(ESPLoraBase):
         self._serial_port.write((json.dumps(data) + "\n").encode("utf-8"))
         self._serial_port.flush()
 
-    def start(self, rx_cb):
+    def _start(self, rx_cb):
         def _conn_thread():
             while not self._rx_thread_stop.is_set():
                 sock = None
@@ -201,9 +201,9 @@ class ESPLoraSerial(ESPLoraBase):
         self._rx_thread_stop = threading.Event()
         self._rx_thread = threading.Thread(target=_conn_thread)
         self._rx_thread.start()
-        super().start(rx_cb)
+        super()._start(rx_cb)
 
-    def stop(self):
+    def _stop(self):
         self._rx_thread_stop.set()
         self._rx_thread.join()
-        super().stop()
+        super()._stop()
