@@ -29,35 +29,38 @@ class LoraModem:
     def _tx(self, p: LoraPacket):
         raise NotImplementedError()
 
+    def _set_lora_params(self, params):
+        raise NotImplementedError()
+
     def set_gain(self, gain: int):
         """
         0 = AGC, 1=min 10=max
         """
-        raise NotImplementedError()
+        self._set_lora_params({"gain": gain})
 
     def set_frequency(self, freq_hz: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"frequency": freq_hz})
 
     def set_spreading_factor(self, sf: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"spreading_factor": sf})
 
     def set_bandwidth(self, bandwidth: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"bandwidth": bandwidth})
 
     def set_coding_rate(self, coding_rate: int) -> None:
         """
         Coding rate 4/x
         """
-        raise NotImplementedError()
+        self._set_lora_params({"coding_rate": coding_rate})
 
     def set_preamble_length(self, bits: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"preamble_length": bits})
 
     def set_syncword(self, syncword: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"syncword": syncword})
 
     def set_tx_power(self, tx_power: int) -> None:
-        raise NotImplementedError()
+        self._set_lora_params({"tx_power": tx_power})
 
     def set_aux_lora_settings(
         self,
@@ -65,4 +68,8 @@ class LoraModem:
         invert_iq: bool,
         low_data_rate_optimize: bool,
     ):
-        raise NotImplementedError()
+        self._set_lora_params({
+            "crc": crc,
+            "invert_iq": invert_iq,
+            "low_data_rate_optimize": low_data_rate_optimize,
+        })

@@ -64,53 +64,30 @@ class ESPLoraBase(lora_modem.LoraModem):
             _logger.debug("updating settings: %s", vals)
             self._tx_data({"type": "settings", **vals})
 
-    def _set_lora_setting(self, name, val):
-        self._set_lora_settings({name: val})
+    def _set_lora_params(self, params):
+        simple_param_map = {
+            "frequency": "frequency",
+            "spreading_factor": "spreadingFactor",
+            "bandwidth": "signalBandwidth",
+            "coding_rate": "codingRate4",
+            "preamble_length": "preambleLength",
+            "syncword": "syncWord",
+            "tx_power": "txPower",
+            "crc": "CRC",
+            "invert_iq": "invertIQ",
+            "low_data_rate_optimize": "lowDataRateOptimize",
+        }
+        res = {}
+        for name, value in params.items():
+            match name:
+                case "gain":
+                    if value != 0:
+                        value = max(int((value * 6) / 10), 1)
+                    res["gain"] = value
+                case _:
+                    res[simple_param_map[name]] = value
+        self._set_lora_settings(res)
 
-    def set_gain(self, gain: int):
-        """
-        0 = AGC, 1=min 10=max
-        """
-        # scale from 1-10 to 1-6
-        if gain != 0:
-            gain = max(int((gain * 6) / 10), 1)
-        self._set_lora_setting("gain", gain)
-
-    def set_frequency(self, freq_hz: int) -> None:
-        self._set_lora_setting("frequency", freq_hz)
-
-    def set_spreading_factor(self, sf: int) -> None:
-        self._set_lora_setting("spreadingFactor", sf)
-
-    def set_bandwidth(self, bandwidth: int) -> None:
-        self._set_lora_setting("signalBandwidth", bandwidth)
-
-    def set_coding_rate(self, coding_rate: int) -> None:
-        """
-        Coding rate 4/x
-        """
-        self._set_lora_setting("codingRate4", coding_rate)
-
-    def set_preamble_length(self, bits: int) -> None:
-        self._set_lora_setting("preambleLength", bits)
-
-    def set_syncword(self, syncword: int) -> None:
-        self._set_lora_setting("syncWord", syncword)
-
-    def set_tx_power(self, tx_power: int) -> None:
-        self._set_lora_setting("txPower", tx_power)
-
-    def set_aux_lora_settings(
-        self,
-        crc: bool,
-        invert_iq: bool,
-        low_data_rate_optimize: bool,
-    ):
-        self._set_lora_settings({
-            "CRC": crc,
-            "invertIQ": invert_iq,
-            "lowDataRateOptimize": low_data_rate_optimize,
-        })
 
 class ESPLoraWifi(ESPLoraBase):
     def __init__(self, host, port):
