@@ -11,6 +11,7 @@ _logger = logging.getLogger(__name__)
 
 class ESPLoraBase(lora_modem.LoraModem):
     def __init__(self):
+        super().__init__()
         self._settings_data = {
             "type": "settings",
             "receive": True,
