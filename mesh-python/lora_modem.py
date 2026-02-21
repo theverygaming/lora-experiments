@@ -1,6 +1,8 @@
 import dataclasses
 import math
 import logging
+import datetime
+import math
 
 
 _logger = logging.getLogger(__name__)
@@ -38,6 +40,43 @@ def calculate_airtime(
     return t_preamble + t_payload
 
 
+class DutyCycleTracker:
+    def __init__(self, observed_max_secs, interval_secs):
+        self._interval = interval_secs
+        self._n_buckets = math.ceil(observed_max_secs / self._interval)
+        self._buckets = [0.0] * self._n_buckets
+        self._t_last = datetime.datetime.now().timestamp()
+
+    def report(self, secs):
+        if secs > self._interval:
+            raise Exception("on time > interval time")
+
+        tnow = datetime.datetime.now().timestamp()
+        tdelta = tnow - self._t_last
+        # when called at intervals smaller than self._interval, try to be accurate
+        self._t_last = tnow - (tdelta % self._interval)
+
+        # add buckets depending on the time elapsed
+        self._buckets = ([0.0] * int(tdelta / self._interval)) + self._buckets
+
+        # remove buckets outside the maximum observation time
+        if len(self._buckets) - self._n_buckets > 0:
+            del self._buckets[-(len(self._buckets) - self._n_buckets):]
+
+        # actually add the on time to the current bucket
+        self._buckets[0] += secs
+
+    def get_duty(self, secs=None):
+        if secs is None:
+            secs = self._n_buckets * self._interval
+        if secs < self._interval:
+            raise Exception("asked for duty cycle in timeframe smaller than interval")
+        n_buckets_sum = math.ceil(secs / self._interval)
+        if n_buckets_sum > len(self._buckets):
+            raise Exception("asked for time period larger than the maximum observal time")
+        return sum(self._buckets[:n_buckets_sum]) / secs
+
+
 @dataclasses.dataclass
 class LoraPacket:
     data: bytes
@@ -56,6 +95,8 @@ class LoraModem:
         self._preamble_length = None
         self._crc = None
         self._low_data_rate_optimize = None
+        self._dt_rx = DutyCycleTracker(60*60, 60)
+        self._dt_tx = DutyCycleTracker(60*60, 60)
 
     def _calc_airtime(self, packet: LoraPacket):
         for a in ["_spreading_factor", "_bandwidth", "_coding_rate", "_preamble_length", "_crc", "_low_data_rate_optimize"]:
@@ -74,7 +115,15 @@ class LoraModem:
 
     def start(self, rx_cb):
         def wrapped_rx_cb(p):
-            _logger.debug("RX airtime: %fs", self._calc_airtime(p))
+            airtime = self._calc_airtime(p)
+            self._dt_rx.report(airtime)
+            _logger.debug("RX airtime: %fs", airtime)
+            _logger.debug(
+                "RX duty cycle: 1min: %f%% 10min: %f%% 60min: %f%%",
+                self._dt_rx.get_duty(60) * 100,
+                self._dt_rx.get_duty(60*10) * 100,
+                self._dt_rx.get_duty(60*60) * 100,
+            )
             rx_cb(p)
         self._start(wrapped_rx_cb)
 
@@ -88,7 +137,15 @@ class LoraModem:
         raise NotImplementedError()
 
     def tx(self, p: LoraPacket):
-        _logger.debug("TX airtime: %fs", self._calc_airtime(p))
+        airtime = self._calc_airtime(p)
+        self._dt_tx.report(airtime)
+        _logger.debug("TX airtime: %fs", airtime)
+        _logger.debug(
+            "TX duty cycle: 1min: %f%% 10min: %f%% 60min: %f%%",
+            self._dt_tx.get_duty(60) * 100,
+            self._dt_tx.get_duty(60*10) * 100,
+            self._dt_tx.get_duty(60*60) * 100,
+        )
         self._tx(p)
 
     def _tx(self, p: LoraPacket):
