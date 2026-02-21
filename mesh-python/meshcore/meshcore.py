@@ -269,7 +269,7 @@ class MeshcorePacket(MeshcoreDataclass):
         kwargs["payload_type"] = PayloadType((int(data[byte_idx]) >> 2) & 0xF)
         kwargs["payload_version"] = PayloadVersion((int(data[byte_idx]) >> 6) & 0x3)
         if kwargs["payload_version"] != PayloadVersion.V0:
-            raise Exception("unsupported payload version")
+            raise Exception(f"unsupported payload version {kwargs['payload_version']}")
         byte_idx += 1
 
         # transport codes
