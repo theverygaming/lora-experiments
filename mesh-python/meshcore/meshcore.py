@@ -41,13 +41,12 @@ class PayloadType(JSONEnum):
     TRACE = 0x9
     MULTIPART = 0xA
     CONTROL = 0xB
-    RESERVED = 0xC # 0xC, 0xD and 0xE all map to this payload type so it can be compared easily 
+    RESERVED_0XC = 0xC
+    RESERVED_0XD = 0xD
+    RESERVED_0XE = 0xE
     RAW_CUSTOM = 0xF
 
     def __call__(cls, value):
-        # unknown reserved value -> map to 0xC
-        if value >= 0xC and value <= 0xE:
-            value = 0xC
         return super().__call__(cls, value)
 
 class PayloadVersion(JSONEnum):
