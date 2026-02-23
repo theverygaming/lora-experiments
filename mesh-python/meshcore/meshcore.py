@@ -179,6 +179,7 @@ class PayloadGroupText(Payload):
 
         raise Exception("could not decrypt")
 
+
 @dataclasses.dataclass
 class PayloadAdvert(Payload):
     pubkey: bytes
@@ -255,6 +256,7 @@ class MeshcorePacket(MeshcoreDataclass):
     transport_codes: list[int] | None
     path: list[int]
     payload: Payload
+    hash: bytes  # TODO: proper hashing thing, this only works for RX, make the hash a getter maybe..?
 
     @classmethod
     def deserialize(cls, node: MeshcoreNode, data: bytes) -> Self:
@@ -293,7 +295,13 @@ class MeshcorePacket(MeshcoreDataclass):
         payload_bytes = data[byte_idx:]
         if len(payload_bytes) > MAX_PACKET_PAYLOAD:
             raise Exception("MAX_PACKET_PAYLOAD exceeded")
-        
+
+        # calculate hash from payload type & payload data
+        sha256hash = cryptography.hazmat.primitives.hashes.Hash(cryptography.hazmat.primitives.hashes.SHA256())
+        sha256hash.update(bytes([kwargs["payload_type"].value]))
+        sha256hash.update(payload_bytes)
+        kwargs["hash"] = sha256hash.finalize()
+
         PAYLOAD_CLASS_LOOKUP = {
             PayloadType.ADVERT: PayloadAdvert,
             PayloadType.GRP_TXT: PayloadGroupText,
@@ -312,13 +320,25 @@ class Meshcore:
         self.modem = modem
         self.node = node
         self._received_msg_queue = received_msg_queue
+        self._head_packet_hashes = []
+
+    def _check_heard(self, hash_: bytes):
+        if hash_ in self._head_packet_hashes:
+            return True
+        self._head_packet_hashes.append(hash_)
+        # https://github.com/meshcore-dev/MeshCore/blob/f903c50e9d62e8f4cf0764036ac7de5a795bccf5/src/helpers/SimpleMeshTables.h#L9
+        MAX_HEARD = 128
+        if len(self._head_packet_hashes) > MAX_HEARD:
+            self._head_packet_hashes = self._head_packet_hashes[-MAX_HEARD:]
+        return False
 
     def start(self):
         def rx_cb(p):
             packet = MeshcorePacket.deserialize(self.node, p.data)
-            _logger.debug("deserialized: %s", packet)
+            heard = self._check_heard(packet.hash)
+            _logger.debug("deserialized: %s - %s", packet, "heard before" if heard else "new packet")
             if self._received_msg_queue is not None:
-                self._received_msg_queue.put((p, packet))
+                self._received_msg_queue.put((p, packet, heard))
             # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
             repeat_full_pwr = p.rssi > -80
             try:
@@ -331,7 +351,6 @@ class Meshcore:
                 if repeat_full_pwr:
                     self.modem.set_tx_power(0)
         self.modem.start(rx_cb)
-        # EU/UK (Narrow) preset
         self.modem.set_preamble_length(16)
         self.modem.set_syncword(0x12) # Meshcore (RADIOLIB_SX126X_SYNC_WORD_PRIVATE)
         self.modem.set_aux_lora_settings(
