@@ -318,7 +318,7 @@ class Meshcore:
             packet = MeshcorePacket.deserialize(self.node, p.data)
             _logger.debug("deserialized: %s", packet)
             if self._received_msg_queue is not None:
-                self._received_msg_queue.put(packet)
+                self._received_msg_queue.put((p, packet))
             # repeat packets that come from closeby nodes with high TX power, everything else with low TX power (rooftop repeater sorta deal)
             repeat_full_pwr = p.rssi > -80
             try:
