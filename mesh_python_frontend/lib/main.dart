@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 void main() {
   runApp(const MyApp());
@@ -108,6 +110,32 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 500),
+              child: FlutterMap(
+                  //mapController: MapController(),
+                  options: MapOptions(
+                    initialCenter: LatLng(0, 0),
+                    initialZoom: 1.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'meow',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(0, 0),
+                          width: 80,
+                          height: 80,
+                          child: FlutterLogo(),
+                        ),
+                      ],
+                    ),
+                  ],
+              ),
             ),
           ],
         ),
