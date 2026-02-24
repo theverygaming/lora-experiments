@@ -37,6 +37,9 @@
               python313Packages.meshtastic
               python313Packages.cryptography
 
+              # mesh-python-frontend
+              flutter
+
               # lora_modem
               platformio
               # because platformio is broken idk
