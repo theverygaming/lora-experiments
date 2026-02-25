@@ -14,6 +14,8 @@ _logger = logging.getLogger(__name__)
 class MeshcorePacket(sillyorm.model.Model):
     _name = "meshcore_packet"
 
+    proto_id = sillyorm.fields.Many2one("proto_meshcore", required=True)
+
     snr = sillyorm.fields.Float()
     rssi = sillyorm.fields.Integer()
     outgoing = sillyorm.fields.Boolean(required=True)
@@ -93,8 +95,9 @@ class MeshcorePacket(sillyorm.model.Model):
             if record.env[record.payload_model].browse(record.payload_id) is None:
                 raise Exception("linked payload record could not be found")
 
-    def from_meshcore_packet(self, packet, snr: float | None, rssi: int | None):
+    def from_meshcore_packet(self, proto_id, packet, snr: float | None, rssi: int | None):
         meshcore_packet = self.create({
+            "proto_id": proto_id,
             "snr": snr,
             "rssi": rssi,
             "outgoing": False,

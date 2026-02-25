@@ -55,7 +55,7 @@ class ProtoMeshcore(sillyorm.model.Model):
             try:
                 # we need to create a new env, as we want to ensure things will be committed
                 with orm.env_ctx() as env:
-                    env["meshcore_packet"].from_meshcore_packet(packet, lora_packet.snr, lora_packet.rssi)
+                    env["meshcore_packet"].from_meshcore_packet(self.id, packet, lora_packet.snr, lora_packet.rssi)
             except:
                 _logger.exception("error creating meshcore_packet")
         data["proto"].stop()
