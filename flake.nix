@@ -36,6 +36,9 @@
               # mesh-python
               python313Packages.meshtastic
               python313Packages.cryptography
+              python313Packages.fastapi
+              fastapi-cli
+              sillyORM.packages.${system}.default
 
               # mesh-python-frontend
               flutter
