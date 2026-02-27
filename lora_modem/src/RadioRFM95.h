@@ -3,9 +3,6 @@
 #include <SPI.h>
 #include <cstdint>
 
-#ifndef RFM95_RESET
-#define RFM95_RESET -1
-#endif
 
 class RadioRFM95 : public LoRaRadio {
 public:
