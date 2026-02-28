@@ -32,6 +32,7 @@ void serialcon_print(const char *str) {
 void serialcon_println(const char *str) {
     if (!serialcon_cmd_mode) {
         SERIALCON_SERIAL_PORT.println(str);
+        SERIALCON_SERIAL_PORT.flush();
     }
 }
 
