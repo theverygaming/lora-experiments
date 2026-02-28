@@ -74,8 +74,16 @@ void RadioRFM95::onReceive(void (*cb)(size_t)) {
     }
 }
 
-int RadioRFM95::read() {
-    return LoRa.read();
+bool RadioRFM95::read(void *buf_, size_t len) {
+    uint8_t *buf = (uint8_t *)buf;
+    for (size_t i = 0; i < len; i++) {
+        int r = LoRa.read();
+        if (r < 0) {
+            return false;
+        }
+        buf[i] = r;
+    }
+    return true;
 }
 
 void RadioRFM95::modeStandby() {

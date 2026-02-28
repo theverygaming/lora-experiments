@@ -21,7 +21,7 @@ public:
     long packetFrequencyError() override;
     void modeContinousReceive(size_t size = 0) override;
     void onReceive(void (*cb)(size_t)) override;
-    int read() override;
+    bool read(void *buf, size_t len) override;
 
     void modeStandby() override;
     void modeSleep() override;

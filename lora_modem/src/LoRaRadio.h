@@ -30,8 +30,8 @@ public:
     virtual void modeContinousReceive(size_t size = 0);
     // onReceive callback, used in continuous receive mode - NOTE: this gets called from interrupt context!
     virtual void onReceive(void (*cb)(size_t));
-    // read a byte from the modem (returns -1 on failure)
-    virtual int read();
+    // read a byte from the modem (returns false on failure)
+    virtual bool read(void *buf, size_t len);
 
     //// OTHER
 

@@ -21,9 +21,7 @@ void CMDCon::rx_hook(size_t psize) {
     p->snr = radio->packetSNR();
     p->freqError = radio->packetFrequencyError();
     p->plen = psize;
-    for (size_t i = 0; i < psize; i++) {
-        p->data[i] = radio->read();
-    }
+    radio->read(p->data, psize);
 }
 
 class DummyStream : public Stream {
