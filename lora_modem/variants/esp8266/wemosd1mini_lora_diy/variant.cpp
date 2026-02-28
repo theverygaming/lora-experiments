@@ -23,5 +23,11 @@ LoRaRadio *variant_get_radio() {
         V_RFM95_RESET
     );
     LOG_DEBUG("RFM95 constructured");
+
+    if(!radio->init()) {
+        LOG_ERROR("radio init failed");
+        return nullptr;
+    }
+
     return radio;
 }

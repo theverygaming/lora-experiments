@@ -35,5 +35,10 @@ LoRaRadio *variant_get_radio() {
 
     // TODO: DIO2 as RF switch!!
 
+    if(!radiosx1262->init()) {
+        LOG_ERROR("radio init failed");
+        return nullptr;
+    }
+
     return radiosx1262;
 }

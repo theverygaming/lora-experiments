@@ -39,10 +39,10 @@ void setup() {
 #endif
 
     radio = variant_get_radio();
-    if(radio != nullptr && radio->init()) {
-        LOG_INFO("Radio init OK");
+    if(radio != nullptr) {
+        LOG_INFO("Got a Radio");
     } else {
-        LOG_ERROR("Radio init failed or no radio, rebooting in 10s");
+        LOG_ERROR("no radio, rebooting in 10s");
         delay(10*1000);
         ESP.restart();
     }
