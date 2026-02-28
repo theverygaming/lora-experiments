@@ -52,6 +52,10 @@ static void config_reinit_wifi(JsonDocument &doc) {
         const char *password = doc["wifi"]["password"];
         LOG_INFO("connecting to WiFi SSID: %s", ssid);
         WiFi.begin(ssid, password);
+    } else {
+        // on some platforms (namely ESP32-C6) it seems initializing a WiFiServer
+        // without calling WiFi.begin() is a really bad idea (crash!)
+        WiFi.begin();
     }
 }
 #endif
@@ -62,11 +66,8 @@ void config_init() {
         LOG_INFO("no config file found, creating new one");
         config_reset();
     }
-#ifdef USE_WIFI
-    // on some platforms (namely ESP32-C6) it seems initializing a WiFiServer
-    // without calling WiFi.begin() is a really bad idea (crash!)
-    WiFi.begin();
-#if defined(ESP32)
+
+#if defined(ESP32) && defined(USE_WIFI)
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info){
         static WiFiEvent_t ev_prev = (WiFiEvent_t)0;
         if (event == ev_prev) {
@@ -106,7 +107,6 @@ void config_init() {
                 break;
         }
     });
-#endif
 #endif
 
     config_refresh();
