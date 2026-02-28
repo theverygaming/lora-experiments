@@ -16,7 +16,6 @@ public:
     void onTxDone(void (*cb)()) override;
     bool isTransmitting() override;
 
-    size_t getPacketSingle(size_t size = 0) override;
     int packetRSSI() override;
     float packetSNR() override;
     long packetFrequencyError() override;

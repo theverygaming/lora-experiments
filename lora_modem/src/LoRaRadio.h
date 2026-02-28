@@ -20,8 +20,6 @@ public:
 
     //// RX
 
-    // gets the next packet if available (single receive mode!), nonzero size means implicit header mode
-    virtual size_t getPacketSingle(size_t size = 0);
     // RSSI of packet in dBm
     virtual int packetRSSI();
     // SNR of packet in dB
@@ -30,7 +28,7 @@ public:
     virtual long packetFrequencyError();
     // continuous receive mode, used together with onReceive, nonzero size means implicit header mode
     virtual void modeContinousReceive(size_t size = 0);
-    // onReceive callback, used in continuous receive mode - if set will make getPacketSingle not return as usual and fire instead NOTE: this gets called from interrupt context!
+    // onReceive callback, used in continuous receive mode - NOTE: this gets called from interrupt context!
     virtual void onReceive(void (*cb)(size_t));
     // read a byte from the modem (returns -1 on failure)
     virtual int read();

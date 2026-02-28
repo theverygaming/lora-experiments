@@ -41,10 +41,6 @@ bool RadioRFM95::isTransmitting() {
     return _ZN9LoRaClass14isTransmittingEv(&LoRa);
 }
 
-size_t RadioRFM95::getPacketSingle(size_t size) {
-    return LoRa.parsePacket(size);
-}
-
 int RadioRFM95::packetRSSI() {
     return LoRa.packetRssi();
 }
