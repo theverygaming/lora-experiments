@@ -44,17 +44,17 @@ static void config_reset() {
     config_write(doc);
 }
 
+#ifdef USE_WIFI
 static void config_reinit_wifi(JsonDocument &doc) {
     LOG_DEBUG("config_reinit_wifi()");
-    #ifdef USE_WIFI
     if (doc["wifi"].is<JsonObject>() && doc["wifi"]["ssid"].is<const char *>() && doc["wifi"]["password"].is<const char *>()) {
         const char *ssid = doc["wifi"]["ssid"];
         const char *password = doc["wifi"]["password"];
         LOG_INFO("connecting to WiFi SSID: %s", ssid);
         WiFi.begin(ssid, password);
     }
-    #endif
 }
+#endif
 
 void config_init() {
     LOG_DEBUG("config_init()");
