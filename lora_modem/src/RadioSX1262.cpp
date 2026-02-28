@@ -136,11 +136,13 @@ int RadioSX1262::rssi() {
 }
 
 bool RadioSX1262::setGain(unsigned short level) {
-    if (level > 6) {
-        level = 6;
+    if (level > 2) {
+        level = 2;
     }
-    // FIXME:
-    int16_t status = this->radio->setRxBoostedGainMode(true);
+    // 0 = auto (on)
+    // 1 = off
+    // 2 = on
+    int16_t status = this->radio->setRxBoostedGainMode(level == 0 || level == 2);
     if (status != RADIOLIB_ERR_NONE) {
         LOG_ERROR("error setting gain, code: %d", status);
         return false;
@@ -154,7 +156,7 @@ unsigned short RadioSX1262::getGain() {
 }
 
 unsigned short RadioSX1262::getGainMax() {
-    return 6;
+    return 2;
 }
 
 bool RadioSX1262::setTxPower(uint8_t dbm) {
