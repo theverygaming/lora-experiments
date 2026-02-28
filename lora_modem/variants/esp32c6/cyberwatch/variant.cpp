@@ -33,11 +33,13 @@ LoRaRadio *variant_get_radio() {
     RadioSX1262 *radiosx1262 = new RadioSX1262(sx1262);
     LOG_DEBUG("done creating RadioLib radio");
 
-    // TODO: DIO2 as RF switch!!
-
     if(!radiosx1262->init()) {
         LOG_ERROR("radio init failed");
         return nullptr;
+    }
+
+    if (sx1262->setDio2AsRfSwitch(true) != RADIOLIB_ERR_NONE) {
+        LOG_ERROR("could not set DIO2 as RF switch");
     }
 
     return radiosx1262;
