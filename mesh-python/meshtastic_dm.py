@@ -42,14 +42,12 @@ class Meshtastic:
                 _logger.exception("exception ingesting meshtastic packet")
         self._modem.start(rx_cb)
         # LongFast EU_868
-        self._modem.set_gain(0) # AGC
         self._modem.set_frequency(869525000)
         self._modem.set_spreading_factor(11)
         self._modem.set_bandwidth(250000)
         self._modem.set_coding_rate(5)
         self._modem.set_preamble_length(16)
         self._modem.set_syncword(0x2b) # meshtastic
-        self._modem.set_tx_power(20)
         self._modem.set_aux_lora_settings(
             crc=True,
             invert_iq=False,

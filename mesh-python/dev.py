@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 def meshtastic_stuff(esplora_inst):
     # channels.json is a list of objects with the keys name and psk
-    with open("channels.json") as f:
+    with open("mesh-python/channels.json") as f:
         channels_json = json.loads(f.read())
 
     meshtastic_inst = meshtastic_dm.Meshtastic(esplora_inst, channels_json)
@@ -43,7 +43,11 @@ if __name__ == "__main__":
     )
 
     esplora_inst = esplora.ESPLoraWifi(host="10.40.189.193", port=8000)
+    # esplora_inst = esplora.ESPLoraWifi(host="10.40.235.224", port=8000)
     # esplora_inst = esplora.ESPLoraSerial("/dev/ttyACM0")
+
+    esplora_inst.set_gain(0) # 0 = AGC
+    esplora_inst.set_tx_power(20)
 
     # meshtastic_stuff(esplora_inst)
     meshcore_stuff(esplora_inst)
