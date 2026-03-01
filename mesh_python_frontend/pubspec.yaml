@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_map: ^8.2.2
   http: ^1.6.0
+  flutter_map_marker_cluster: ^8.2.2
 
 dev_dependencies:
   flutter_test:
