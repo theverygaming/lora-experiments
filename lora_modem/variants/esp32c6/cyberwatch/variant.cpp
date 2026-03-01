@@ -37,6 +37,14 @@ LoRaRadio *variant_get_radio() {
         LOG_ERROR("radio init failed");
         return nullptr;
     }
+    
+    // it turns out the cyberwatch LoRa shard doesn't have RF_SW of the Wio-SX1262 hooked up.
+    // It should be pulled high during RX, not doing so seems to have a catastrophic effect on
+    // RX sensitity... I went and bridged it to the IO11 (which also happens to be an LED) with magent wire
+    sx1262->setRfSwitchPins(
+        11, // rxen
+        RADIOLIB_NC // txen
+    );
 
     if (sx1262->setDio2AsRfSwitch(true) != RADIOLIB_ERR_NONE) {
         LOG_ERROR("could not set DIO2 as RF switch");
