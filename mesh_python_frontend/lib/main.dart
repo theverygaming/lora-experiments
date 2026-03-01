@@ -59,12 +59,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  late Future<api.Node> futureNode;
+  late Future<List<api.Node>> futureNodes;
 
   @override
   void initState() {
     super.initState();
-    futureNode = api.fetchNode();
+    futureNodes = api.fetchNodes();
   }
 
   void _incrementCounter() {
@@ -133,42 +133,22 @@ class _MyHomePageState extends State<MyHomePage> {
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'meow',
                     ),
-                    FutureBuilder<api.Node>(
-                      future: futureNode,
+                    FutureBuilder<List<api.Node>>(
+                      future: futureNodes,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
                           return MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: LatLng(snapshot.data!.lat as double, snapshot.data!.lon as double),
-                                width: 80,
-                                height: 80,
-                                child: FlutterLogo(),
-                              ),
-                            ],
+                            markers: snapshot.data!.map((node) => (Marker(
+                              point: LatLng(node.lat ?? 0.0, node.lon ?? 0.0),
+                              width: 10,
+                              height: 10,
+                              child: FlutterLogo(),
+                            ))).toList(),
                           );
-                        } else if (snapshot.hasError) {
-                          return MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: LatLng(0, 0),
-                                width: 80,
-                                height: 80,
-                                child: FlutterLogo(),
-                              ),
-                            ],
-                          );
-                        }
+                        } else if (snapshot.hasError) {}
 
                         return MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: LatLng(0, 0),
-                              width: 80,
-                              height: 80,
-                              child: FlutterLogo(),
-                            ),
-                          ],
+                          markers: [],
                         );
                       }
                     ),
