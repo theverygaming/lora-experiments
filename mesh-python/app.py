@@ -236,4 +236,4 @@ async def lifespan(app: fastapi.FastAPI):
 
 app = fastapi.FastAPI(lifespan=lifespan)
 
-app.include_router(meshcore_api.router, prefix="/meshcore")
+app.include_router(meshcore_api.routes.router.router, prefix="/meshcore")
