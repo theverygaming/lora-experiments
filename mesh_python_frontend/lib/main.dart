@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'api.dart' as api;
 
 void main() {
   runApp(const MyApp());
@@ -57,6 +58,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+
+  late Future<api.Node> futureNode;
+
+  @override
+  void initState() {
+    super.initState();
+    futureNode = api.fetchNode();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -124,15 +133,44 @@ class _MyHomePageState extends State<MyHomePage> {
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'meow',
                     ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: LatLng(0, 0),
-                          width: 80,
-                          height: 80,
-                          child: FlutterLogo(),
-                        ),
-                      ],
+                    FutureBuilder<api.Node>(
+                      future: futureNode,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(snapshot.data!.lat as double, snapshot.data!.lon as double),
+                                width: 80,
+                                height: 80,
+                                child: FlutterLogo(),
+                              ),
+                            ],
+                          );
+                        } else if (snapshot.hasError) {
+                          return MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(0, 0),
+                                width: 80,
+                                height: 80,
+                                child: FlutterLogo(),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(0, 0),
+                              width: 80,
+                              height: 80,
+                              child: FlutterLogo(),
+                            ),
+                          ],
+                        );
+                      }
                     ),
                   ],
               ),
