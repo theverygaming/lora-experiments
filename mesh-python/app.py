@@ -3,6 +3,7 @@ import logging
 import threading
 import contextlib
 import fastapi
+import fastapi.middleware.cors
 import pydantic
 import sillyorm
 from . import orm
@@ -235,5 +236,15 @@ async def lifespan(app: fastapi.FastAPI):
     ProtoCommon.stop_all_protos()
 
 app = fastapi.FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    fastapi.middleware.cors.CORSMiddleware,
+    allow_origins=[
+        "*", # FIXME: lmao
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(meshcore_api.routes.router.router, prefix="/meshcore")
