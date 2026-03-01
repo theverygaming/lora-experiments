@@ -64,6 +64,9 @@ class MeshcorePayloadAdvert(sillyorm.model.Model):
     lon = sillyorm.fields.Float()
     name = sillyorm.fields.String()
 
+    # FIXME: this should be ondelete cascade but we got issues cuz of the references in
+    # the base payload to packet_id which back-references the payload.
+    # if we cascade this, meshcore_packet records will be left without any valid references..
     node_id = sillyorm.fields.Many2one("meshcore_node", required=True)
 
     @sillyorm.model.constraints("pubkey")
