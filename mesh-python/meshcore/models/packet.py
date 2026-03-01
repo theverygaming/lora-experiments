@@ -1,7 +1,6 @@
 import logging
 import datetime
 import pydantic
-import queue
 import sillyorm
 from ... import orm
 from .. import meshcore
