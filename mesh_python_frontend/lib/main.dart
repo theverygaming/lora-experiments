@@ -139,11 +139,26 @@ class _MyHomePageState extends State<MyHomePage> {
                       builder: (context, snapshot) {
                         List<Marker> markers = [];
                         if (snapshot.hasData) {
-                          markers = snapshot.data!.map((node) => (Marker(
+                          markers = snapshot.data!.where((node) => ((node.lat ?? 0.0) != 0.0 && (node.lon ?? 0.0) != 0.0)).map((node) => (Marker(
                             point: LatLng(node.lat ?? 0.0, node.lon ?? 0.0),
-                            width: 10,
-                            height: 10,
-                            child: FlutterLogo(),
+                            width: 150,
+                            height: 60,
+                            child: GestureDetector(
+                              onTap: () {},
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FlutterLogo(),
+                                  Text(
+                                    node.name ?? "unknown name",
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ))).toList();
                         } else if (snapshot.hasError) {}
 
