@@ -36,18 +36,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  int currentPageIndex = 0;
+  int currentAppModeIndex = 1;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
   }
 
   @override
@@ -56,46 +49,34 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+        actions: [IconButton(
+          icon: const Icon(Icons.swap_horiz),
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            builder: (_) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: ["experiment", "MeshCore"].asMap().entries.map((value) {
+                return ListTile(
+                  title: Text(value.value),
+                  selected: false,
+                  onTap: () {
+                    setState(() {
+                      currentAppModeIndex = value.key;
+                    });
+                    Navigator.pop(context); // closes modal
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        )],
       ),
       body: [
         Center(
-          child: Column(
-            mainAxisAlignment: .center,
-            children: [
-              const Text('You have pushed the button this many times:'),
-              Text(
-                '$_counter',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ],
-          ),
+          child: const Text('Experiment'),
         ),
         mc.MyHomePage(),
-      ][currentPageIndex],
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.map),
-            label: 'Node Map',
-          ),
-        ],
-      ),
+      ][currentAppModeIndex],
     );
   }
 }
