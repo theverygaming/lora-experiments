@@ -9,6 +9,25 @@ _logger = logging.getLogger(__name__)
 
 
 @orm.register_model
+class MeshcorePacket(sillyorm.model.Model):
+    _name = "meshcore_packet"
+    _extends = "meshcore_packet"
+
+    payload_raw_id = sillyorm.fields.Many2one("meshcore_payload_raw")
+    payload_group_text_id = sillyorm.fields.Many2one("meshcore_payload_group_text")
+    payload_advert_id = sillyorm.fields.Many2one("meshcore_payload_advert")
+
+    def _get_payload_field(self, payload):
+        if isinstance(payload, meshcore.PayloadAdvert):
+            return ("payload_advert_id", "meshcore_payload_advert")
+        elif isinstance(payload, meshcore.PayloadGroupText):
+            return ("payload_group_text_id", "meshcore_payload_group_text")
+        elif isinstance(payload, meshcore.PayloadRaw):
+            return ("payload_raw_id", "meshcore_payload_raw")
+        return super()._get_payload_field(payload)
+
+
+@orm.register_model
 class MeshcorePayload(sillyorm.model.AbstractModel):
     _name = "meshcore_payload"
 

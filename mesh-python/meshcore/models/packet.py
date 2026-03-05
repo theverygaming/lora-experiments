@@ -79,20 +79,8 @@ class MeshcorePacket(sillyorm.model.Model):
                 if not isinstance(x, int) or not (x >= 0 and x <= 255):
                     raise Exception("path item must be integer from 0-255")
 
-    # link to payload
-    # technically these should be required, but I sense a chicken-egg problem with the back link on the payload..
-    payload_model = sillyorm.fields.String()
-    payload_id = sillyorm.fields.Integer()
-
-    @sillyorm.model.constraints("payload_model", "payload_id")
-    def _payload_link_check(self):
-        for record in self:
-            if not (record.payload_model is None) == (record.payload_id is None):
-                raise Exception("both payload_model and payload_id must be set at the same time")
-            if record.payload_model is None:
-                continue
-            if record.env[record.payload_model].browse(record.payload_id) is None:
-                raise Exception("linked payload record could not be found")
+    def _get_payload_field(self, payload):
+        return (None, None)
 
     def from_meshcore_packet(self, proto_id, packet, snr: float | None, rssi: int | None):
         meshcore_packet = self.create({
@@ -128,17 +116,11 @@ class MeshcorePacket(sillyorm.model.Model):
             "transport_codes": packet.transport_codes,
             "path": packet.path,
         })
-        if isinstance(packet.payload, meshcore.PayloadAdvert):
-            payload_model = "meshcore_payload_advert"
-        elif isinstance(packet.payload, meshcore.PayloadGroupText):
-            payload_model = "meshcore_payload_group_text"
-        elif isinstance(packet.payload, meshcore.PayloadRaw):
-            payload_model = "meshcore_payload_raw"
-        else:
+        payload_field, payload_model = self._get_payload_field(packet.payload)
+        if payload_field is None or payload_model is None:
             raise Exception(f"unknown payload {packet.payload}")
         payload = self.env[payload_model].from_meshcore_payload(meshcore_packet, packet.payload)
         meshcore_packet.write({
-            "payload_model": payload._name,
-            "payload_id": payload.id,
+            payload_field: payload.id,
         })
         return meshcore_packet
