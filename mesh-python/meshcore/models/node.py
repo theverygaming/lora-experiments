@@ -1,8 +1,5 @@
-from typing import Literal
 import logging
 import datetime
-import base64
-import pydantic
 import sillyorm
 from ... import orm
 from .. import meshcore
@@ -67,40 +64,3 @@ class MeshcoreNode(sillyorm.model.Model):
             **node_data,
         }
         return self.create(create_data)
-
-
-class MeshcoreNodeEditPydantic(pydantic.BaseModel):
-    node_type: Literal["companion", "repeater", "roomserver", "sensor"]
-    pubkey: pydantic.Base64Bytes
-    lat: float | None
-    lon: float | None
-    name: str | None
-    out_path: list[int] | None
-
-    def get_vals(self):
-        d = self.model_dump()
-        d["pubkey"] = self.pubkey
-        return d
-
-
-class MeshcoreNodePydantic(MeshcoreNodeEditPydantic):
-    last_heard: datetime.datetime | None
-
-    #TODO: advert_payload_ids:
-
-
-class MeshcoreNodePydanticWithId(MeshcoreNodePydantic):
-    id: int
-
-    @staticmethod
-    def from_record(record):
-        return MeshcoreNodePydanticWithId(
-            node_type=record.node_type,
-            pubkey=base64.b64encode(record.pubkey),
-            last_heard=record.last_heard,
-            lat=record.lat,
-            lon=record.lon,
-            name=record.name,
-            out_path=record.out_path,
-            id=record.id,
-        )

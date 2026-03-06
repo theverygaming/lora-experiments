@@ -3,17 +3,17 @@ import fastapi
 import sillyorm
 from ... import orm
 from .router import router
-from .. import models
+from . import pydantic_models
 
 
 @router.get("/nodes")
-async def node_list(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)]) -> list[models.node.MeshcoreNodePydanticWithId]:
+async def node_list(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)]) -> list[pydantic_models.MeshcoreNodePydanticWithId]:
     nodes = env["meshcore_node"].search([])
-    return [models.node.MeshcoreNodePydanticWithId.from_record(record) for record in nodes]
+    return [pydantic_models.MeshcoreNodePydanticWithId.from_record(record) for record in nodes]
 
 
 @router.post("/nodes")
-async def node_create(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)], node: models.node.MeshcoreNodeEditPydantic) -> int:
+async def node_create(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)], node: pydantic_models.MeshcoreNodeEditPydantic) -> int:
     node = env["meshcore_node"].create(node.get_vals())
     return node.id
 
@@ -21,11 +21,11 @@ async def node_create(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.e
 @router.get("/nodes/{node_id}")
 async def node_get(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)], node_id: int):
     node = env["meshcore_node"].browse(node_id)
-    return models.node.MeshcoreNodePydanticWithId.from_record(node)
+    return pydantic_models.MeshcoreNodePydanticWithId.from_record(node)
 
 
 @router.put("/nodes/{node_id}")
-async def node_update(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)], node_id: int, node: models.node.MeshcoreNodeEditPydantic):
+async def node_update(env: Annotated[sillyorm.Environment, fastapi.Depends(orm.env)], node_id: int, node: pydantic_models.MeshcoreNodeEditPydantic):
     env["meshcore_node"].browse(node_id).write(node.get_vals())
 
 

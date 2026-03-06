@@ -1,6 +1,5 @@
 import logging
 import time
-import pydantic
 import queue
 import sillyorm
 from ... import orm
