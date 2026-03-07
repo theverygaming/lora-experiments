@@ -55,7 +55,7 @@ class MeshcorePayloadGroupText(sillyorm.model.Model):
     _name = "meshcore_payload_group_text"
     _inherits = ["meshcore_payload"]
 
-    channel = sillyorm.fields.Many2one("meshcore_channel", required=True)
+    channel_id = sillyorm.fields.Many2one("meshcore_channel", required=True)
     timestamp = sillyorm.fields.Datetime(tzinfo=datetime.timezone.utc, convert_tz=True, required=True)
     sender_name = sillyorm.fields.String(required=True)
     message = sillyorm.fields.String(required=True)
@@ -63,7 +63,7 @@ class MeshcorePayloadGroupText(sillyorm.model.Model):
     def from_meshcore_payload(self, packet, payload: meshcore.Payload):
         return self.create({
             "packet_id": packet.id,
-            "channel": payload.channel_key,
+            "channel_id": payload.channel_key,
             "timestamp": payload.timestamp,
             "sender_name": payload.sender_name,
             "message": payload.message,
