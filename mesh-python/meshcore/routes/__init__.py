@@ -1,2 +1,2 @@
 from . import router
-from . import nodes
+from . import channels, nodes

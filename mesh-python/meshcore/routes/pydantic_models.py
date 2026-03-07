@@ -39,3 +39,12 @@ class MeshcoreNodePydanticWithId(MeshcoreNodePydantic):
             out_path=record.out_path,
             id=record.id,
         )
+
+
+class MeshcoreChannelPydantic(pydantic.BaseModel):
+    name: str
+    key: pydantic.Base64Bytes
+
+
+class MeshcoreChannelPydanticWithId(MeshcoreChannelPydantic):
+    id: int
