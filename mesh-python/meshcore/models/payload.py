@@ -25,6 +25,15 @@ class MeshcorePacket(sillyorm.model.Model):
             return ("payload_raw_id", "meshcore_payload_raw")
         return super()._get_payload_field(payload)
 
+    def get_payload(self):
+        if self.payload_advert_id:
+            return self.payload_advert_id
+        if self.payload_group_text_id:
+            return self.payload_group_text_id
+        if self.payload_raw_id:
+            return self.payload_raw_id
+        return super().get_payload()
+
 
 @orm.register_model
 class MeshcorePayload(sillyorm.model.AbstractModel):

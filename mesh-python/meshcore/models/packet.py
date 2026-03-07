@@ -18,6 +18,7 @@ class MeshcorePacket(sillyorm.model.Model):
     rssi = sillyorm.fields.Integer()
     outgoing = sillyorm.fields.Boolean(required=True)
 
+    # TODO: what if outgoing??? Then received makes no sense...
     timestamp_received = sillyorm.fields.Datetime(tzinfo=datetime.timezone.utc, convert_tz=True, required=True)
 
     route_type = sillyorm.fields.Selection(["flood", "direct", "transport_flood", "transport_direct"], required=True)
@@ -80,6 +81,9 @@ class MeshcorePacket(sillyorm.model.Model):
 
     def _get_payload_field(self, payload):
         return (None, None)
+
+    def get_payload(self):
+        raise Exception("no payload")
 
     def from_meshcore_packet(self, proto_id, packet, snr: float | None, rssi: int | None):
         meshcore_packet = self.create({
