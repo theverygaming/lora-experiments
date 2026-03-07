@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
-import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import 'api.dart' as api;
+import '../chat.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -15,39 +15,11 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int currentPageIndex = 0;
   late Future<List<api.Node>> futureNodes;
-  List<List<dynamic>> messages = [["Hii", false], ["Hewwo :3", true], ["woof woof!", false]];
-  final TextEditingController _send_controller = TextEditingController();
-
-  // https://stackoverflow.com/a/69359022
-  late final _send_focusNode = FocusNode(
-    onKeyEvent: (FocusNode node, KeyEvent evt) {
-      if (!HardwareKeyboard.instance.isShiftPressed && evt.logicalKey.keyLabel == 'Enter') {
-        if (evt is KeyDownEvent) {
-          _sendMessage();
-        }
-        return KeyEventResult.handled;
-      } else {
-        return KeyEventResult.ignored;
-      }
-    },
-  );
-
 
   @override
   void initState() {
     super.initState();
     futureNodes = api.fetchNodes();
-  }
-
-  void _sendMessage() {
-    String trimmed = _send_controller.text.trim();
-    if (trimmed.isEmpty) {
-      return;
-    }
-    setState(() {
-      messages.add([trimmed, true]);
-    });
-    _send_controller.clear();
   }
 
   @override
@@ -130,63 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(10),
-                itemCount: messages.length,
-                itemBuilder: (context, idx) {
-                  final message = messages[idx];
-                  return Align(
-                    alignment: (message[1] as bool) ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: (message[1] as bool) ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        (message[0] as String),
-                        style: TextStyle(
-                          color: (message[1] as bool) ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _send_controller,
-                      autofocus: true,
-                      focusNode: _send_focusNode,
-                      decoration: InputDecoration(
-                        hintText: "bark here...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                      ),
-                      maxLines: null, // allows newline
-                      textInputAction: TextInputAction.newline, // apparently shows the return key on mobile keyboards
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        Chat(),
       ][currentPageIndex],
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
