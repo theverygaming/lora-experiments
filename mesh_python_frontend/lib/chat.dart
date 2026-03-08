@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 class ChatMessage {
   String text;
   bool outgoing;
+  String? senderName;
 
   ChatMessage({
     required this.text,
     required this.outgoing,
+    this.senderName,
   });
 }
 
@@ -130,12 +132,25 @@ class _ChatState extends State<Chat> {
                         color: message.outgoing ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        message.text,
-                        style: TextStyle(
-                          color: message.outgoing ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
-                          fontSize: 14,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: .start,
+                        children: [
+                          if (message.senderName != null)
+                            Text(
+                              message.senderName as String,
+                              style: TextStyle(
+                                color: message.outgoing ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
+                                fontSize: 11,
+                              ),
+                            ),
+                          Text(
+                            message.text,
+                            style: TextStyle(
+                              color: message.outgoing ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
