@@ -12,19 +12,25 @@ class ChatMessage {
 }
 
 class Chat extends StatefulWidget {
-  const Chat({super.key});
+  final List<ChatMessage> messages;
+  final void Function(String message)? onSendMessage;
+  final Future<void> Function()? onLoadOlderMessages;
+
+  const Chat({
+    super.key,
+    required this.messages,
+    this.onSendMessage,
+    this.onLoadOlderMessages,
+  });
 
   @override
   State<Chat> createState() => _ChatState();
 }
 
 class _ChatState extends State<Chat> {
-  List<ChatMessage> messages = [
-    ChatMessage(text: "Hii", outgoing: false),
-    ChatMessage(text: "Hewwo :3", outgoing: true),
-    ChatMessage(text: "woof woof!", outgoing: false),
-  ];
   final TextEditingController _send_controller = TextEditingController();
+  late final ScrollController _scroll_controller = ScrollController();
+  bool _is_loading_older_messages = false;
 
   // https://stackoverflow.com/a/69359022
   late final _send_focusNode = FocusNode(
@@ -44,6 +50,33 @@ class _ChatState extends State<Chat> {
   @override
   void initState() {
     super.initState();
+    _scroll_controller.addListener(() {
+      if (_scroll_controller.position.atEdge && _scroll_controller.position.pixels == 0) {
+        _onScrollHitTop();
+        // BUG: 6:30am now. I wanna detect overscroll at the top. This silly thing doesn't let me grrr so uh I just
+        _scroll_controller.jumpTo(1);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+
+  Future<void> _onScrollHitTop() async {
+    if (!_is_loading_older_messages) {
+      setState(() {
+        _is_loading_older_messages = true;
+      });
+      await widget.onLoadOlderMessages?.call();
+      setState(() {
+        _is_loading_older_messages = false;
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    _scroll_controller.jumpTo(_scroll_controller.position.maxScrollExtent);
   }
 
   void _sendMessage() {
@@ -51,10 +84,15 @@ class _ChatState extends State<Chat> {
     if (trimmed.isEmpty) {
       return;
     }
-    setState(() {
-      messages.add(ChatMessage(text: trimmed, outgoing: true));
-    });
+    widget.onSendMessage?.call(trimmed);
     _send_controller.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+      // BUG: yea idfk if we are too far up scrolling once won't do it. It's 6am, I want this to work now lmao
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    });
   }
 
   @override
@@ -62,30 +100,48 @@ class _ChatState extends State<Chat> {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(10),
-            itemCount: messages.length,
-            itemBuilder: (context, idx) {
-              final message = messages[idx];
-              return Align(
-                alignment: message.outgoing ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: message.outgoing ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.outgoing ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14,
+          child: Stack(
+            children: [
+              if (_is_loading_older_messages)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(),
                     ),
                   ),
                 ),
-              );
-            },
+              ListView.builder(
+                controller: _scroll_controller,
+                padding: const EdgeInsets.all(10),
+                itemCount: widget.messages.length,
+                itemBuilder: (context, idx) {
+                  final message = widget.messages[idx];
+                  return Align(
+                    alignment: message.outgoing ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: message.outgoing ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        message.text,
+                        style: TextStyle(
+                          color: message.outgoing ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
         SafeArea(

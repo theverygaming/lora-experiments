@@ -15,6 +15,30 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int currentPageIndex = 0;
   late Future<List<api.Node>> futureNodes;
+  List<ChatMessage> messages = [
+    ChatMessage(text: "Hii", outgoing: false),
+    ChatMessage(text: "Hewwo :3", outgoing: true),
+    ChatMessage(text: "woof woof!", outgoing: false),
+    ChatMessage(text: "waf!", outgoing: true),
+    ChatMessage(text: "bark!", outgoing: false),
+    ChatMessage(text: "awoo!", outgoing: true),
+    ChatMessage(text: "woof woof!", outgoing: false),
+    ChatMessage(text: "waf!", outgoing: true),
+    ChatMessage(text: "bark!", outgoing: false),
+    ChatMessage(text: "awoo!", outgoing: true),
+    ChatMessage(text: "woof woof!", outgoing: false),
+    ChatMessage(text: "waf!", outgoing: true),
+    ChatMessage(text: "bark!", outgoing: false),
+    ChatMessage(text: "awoo!", outgoing: true),
+    ChatMessage(text: "woof woof!", outgoing: false),
+    ChatMessage(text: "waf!", outgoing: true),
+    ChatMessage(text: "bark!", outgoing: false),
+    ChatMessage(text: "awoo!", outgoing: true),
+    ChatMessage(text: "woof woof!", outgoing: false),
+    ChatMessage(text: "waf!", outgoing: true),
+    ChatMessage(text: "bark!", outgoing: false),
+    ChatMessage(text: "awoo!", outgoing: true),
+  ];
 
   @override
   void initState() {
@@ -102,7 +126,24 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        Chat(),
+        Chat(
+          messages: messages,
+          onSendMessage: (msg) {
+            setState(() {
+              messages.add(ChatMessage(text: msg, outgoing: true));
+            });
+          },
+          onLoadOlderMessages: () {
+            return Future.delayed(
+              const Duration(milliseconds: 500),
+              () {
+                setState(() {
+                  messages.insert(0, ChatMessage(text: "old!", outgoing: false));
+                });
+              },
+            );
+          },
+        ),
       ][currentPageIndex],
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
