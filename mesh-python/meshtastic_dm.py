@@ -54,6 +54,31 @@ class Meshtastic:
             low_data_rate_optimize=False,
         )
 
+    def _send_traceroute(self, to: int):
+        payload = meshtastic.mesh_pb2.RouteDiscovery()
+        msg = meshtastic.mesh_pb2.Data()
+        msg.portnum = meshtastic.portnums_pb2.PortNum.TRACEROUTE_APP
+        msg.payload = payload.SerializeToString()
+        msg.bitfield = 2 # no idea what this means :3c
+        npkdata = {
+            "destination": to,
+            "sender": self._node_id,
+            "packetID": int.from_bytes(random.randbytes(4), "little"),
+            "hopLimit": 7,
+            "wantAck": True,
+            "viaMQTT": False,
+            "hopStart": 7,
+            "channelHash": self._channels["LongFast"]["hash"],
+            "nextHop": 0,
+            # "relayNode": self._node_id & 0xFF,
+            "relayNode": 0,
+            "payload": msg,
+        }
+        _logger.debug("npkdata: %s", npkdata)
+        # make sure we don't relay our own packet again lmao
+        self._heard_packet_ids.add(npkdata["packetID"])
+        self._modem.tx(lora_modem.LoraPacket(self.packet_serialize(npkdata)))
+
     def stop(self):
         self._modem.stop()
 
