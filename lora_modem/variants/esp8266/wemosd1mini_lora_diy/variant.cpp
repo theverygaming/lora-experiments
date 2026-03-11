@@ -31,3 +31,7 @@ LoRaRadio *variant_get_radio() {
 
     return radio;
 }
+
+void variant_restart() {
+    ESP.restart();
+}

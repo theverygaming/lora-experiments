@@ -26,7 +26,7 @@ void setup() {
 #endif
         LOG_ERROR("could not initialize LittleFS, rebooting in 10s");
         delay(10*1000);
-        ESP.restart();
+        variant_restart();
     }
     config_init();
 
@@ -44,7 +44,7 @@ void setup() {
     } else {
         LOG_ERROR("no radio, rebooting in 10s");
         delay(10*1000);
-        ESP.restart();
+        variant_restart();
     }
 
     // random settings

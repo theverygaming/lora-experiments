@@ -52,3 +52,7 @@ LoRaRadio *variant_get_radio() {
 
     return radiosx1262;
 }
+
+void variant_restart() {
+    ESP.restart();
+}
