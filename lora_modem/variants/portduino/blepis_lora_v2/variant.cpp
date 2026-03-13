@@ -67,10 +67,14 @@ static void gpio_expander_deinit() {
     Wire.end();
 }
 
-static PiHal* hal = new PiHal(1);
+static PiHal* hal = new PiHal(
+    1, // channel
+    2000000, // speed
+    1 // device
+);
 static LLCC68 llcc68 = new Module(
     hal,
-    17, // CS
+    RADIOLIB_NC, // CS - this is handled by the PiHal above
     23, // DIO1
     RADIOLIB_NC, // reset - on GPIO expander, we reset on startup
     25 // busy
@@ -90,7 +94,7 @@ LoRaRadio *variant_get_radio() {
         LOG_ERROR("could not set DIO2 as RF switch");
     }
 
-    return nullptr;
+    return radiosx1262;
 }
 
 void variant_restart() {
