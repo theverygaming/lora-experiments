@@ -3,7 +3,9 @@
 #include <logging.h>
 #include <serialcon.h>
 #include <cmdcon.h>
+#ifndef PLATFORM_PORTDUINO
 #include <LittleFS.h>
+#endif
 #include <config.h>
 #include <tcpserver.h>
 #include <blecon.h>
@@ -19,15 +21,17 @@ void setup() {
 #endif
     serialcon_init();
     LOG_INFO("hi from lora_modem!");
+#ifndef PLATFORM_PORTDUINO
 #if defined(ESP32)
     if(!LittleFS.begin(true /* formatOnFail */)) {
 #elif defined(ARDUINO_ARCH_ESP8266)
     if(!LittleFS.begin()) {
-#endif
         LOG_ERROR("could not initialize LittleFS, rebooting in 10s");
         delay(10*1000);
         variant_restart();
     }
+#endif
+#endif
     config_init();
 
 #ifdef USE_BLE

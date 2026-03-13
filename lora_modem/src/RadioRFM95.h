@@ -1,6 +1,9 @@
 #pragma once
 #include <LoRaRadio.h>
 #include <SPI.h>
+#ifdef PLATFORM_PORTDUINO
+#include <HardwareSPI.h>
+#endif
 #include <cstdint>
 
 

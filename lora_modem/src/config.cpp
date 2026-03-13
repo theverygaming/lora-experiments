@@ -1,19 +1,24 @@
 #include <config.h>
 #include <logging.h>
+#ifndef PLATFORM_PORTDUINO
 #include <LittleFS.h>
+#endif
 #include <ArduinoJson.h>
 #include <variant.h>
 
+#ifndef PLATFORM_PORTDUINO
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
+#endif
 #endif
 
 static const char *config_file = "/config.json";
 
 static JsonDocument config_read() {
     JsonDocument doc;
+#ifndef PLATFORM_PORTDUINO
     File file = LittleFS.open(config_file, "r");
     if(!file) {
         LOG_ERROR("failed to open config file");
@@ -26,16 +31,19 @@ static JsonDocument config_read() {
         return doc;
     }
     file.close();
+#endif
     return doc;
 }
 
 static void config_write(JsonDocument &doc) {
+#ifndef PLATFORM_PORTDUINO
     File file = LittleFS.open(config_file, "w");
     if (!file) {
         LOG_ERROR("failed to open config file for (create) & write");
     }
     serializeJson(doc, file);
     file.close();
+#endif
 }
 
 static void config_reset() {
@@ -44,6 +52,7 @@ static void config_reset() {
     config_write(doc);
 }
 
+#ifndef PLATFORM_PORTDUINO
 #ifdef USE_WIFI
 static void config_reinit_wifi(JsonDocument &doc) {
     LOG_DEBUG("config_reinit_wifi()");
@@ -59,13 +68,16 @@ static void config_reinit_wifi(JsonDocument &doc) {
     }
 }
 #endif
+#endif
 
 void config_init() {
     LOG_DEBUG("config_init()");
+#ifndef PLATFORM_PORTDUINO
     if (!LittleFS.exists(config_file)) {
         LOG_INFO("no config file found, creating new one");
         config_reset();
     }
+#endif
 
 #if defined(ESP32) && defined(USE_WIFI)
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info){
@@ -127,7 +139,9 @@ void config_set_wifi(const char *ssid, const char *password) {
 void config_refresh() {
     LOG_DEBUG("config_refresh()");
     JsonDocument doc = config_read();
+#ifndef PLATFORM_PORTDUINO
 #ifdef USE_WIFI
     config_reinit_wifi(doc);
+#endif
 #endif
 }

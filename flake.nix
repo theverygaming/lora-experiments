@@ -47,6 +47,19 @@
               platformio
               # because platformio is broken idk
               python313Packages.packaging
+              # portduino stuff
+              pkg-config
+              libuv
+              libgpiod
+              i2c-tools
+              (lgpio.overrideAttrs (final: prev: {
+                src = fetchFromGitHub {
+                  owner = "joan2937";
+                  repo = "lg";
+                  rev = "bcccd782eceedc5b278b3056ea81d5fbbb89c489";
+                  hash = "sha256-v8zh2x9eU2iAzD8MXCmBWvI3vFSGds9TFzHXorFjeqk=";
+                };
+              }))
 
               # rustymesh
               cargo

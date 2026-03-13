@@ -20,7 +20,9 @@ void serialcon_init() {
         yield();
     }
     serialcon_cmd_mode = false;
+#ifndef PLATFORM_PORTDUINO
     delay(3000); // wait a bit to ensure we don't print anything before the connection is 100% fine
+#endif
 }
 
 void serialcon_print(const char *str) {
@@ -32,7 +34,11 @@ void serialcon_print(const char *str) {
 void serialcon_println(const char *str) {
     if (!serialcon_cmd_mode) {
         SERIALCON_SERIAL_PORT.println(str);
+#ifndef PLATFORM_PORTDUINO
         SERIALCON_SERIAL_PORT.flush();
+#else
+        fflush(stdout);
+#endif
     }
 }
 
