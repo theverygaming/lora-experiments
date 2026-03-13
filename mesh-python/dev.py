@@ -37,6 +37,28 @@ def meshcore_stuff(esplora_inst):
     meshcore_inst = meshcore.meshcore.Meshcore(esplora_inst, node)
     meshcore_inst.start()
 
+def lora_sample(esplora_inst):
+    esplora_inst.set_frequency(869618000)
+    esplora_inst.set_spreading_factor(8)
+    esplora_inst.set_bandwidth(125000)
+    esplora_inst.set_coding_rate(8)
+    esplora_inst.set_preamble_length(16)
+    esplora_inst.set_syncword(0x12)
+    esplora_inst.set_aux_lora_settings(
+        crc=True,
+        invert_iq=False,
+        low_data_rate_optimize=False,
+    )
+
+    def rx(p):
+        print(f"received {p}")
+
+    esplora_inst.start(rx)
+
+    while True:
+        time.sleep(3)
+        esplora_inst.tx(lora_modem.LoraPacket("hello world!".encode("UTF-8")))
+
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(name)s: %(message)s", level=logging.DEBUG
@@ -44,6 +66,7 @@ if __name__ == "__main__":
 
     esplora_inst = esplora.ESPLoraWifi(host="10.40.189.193", port=8000)
     # esplora_inst = esplora.ESPLoraWifi(host="10.40.235.224", port=8000)
+    # esplora_inst = esplora.ESPLoraWifi(host="dietpi.lan.m.furrypri.de", port=8000)
     # esplora_inst = esplora.ESPLoraSerial("/dev/ttyACM0")
 
     esplora_inst.set_gain(0) # 0 = AGC
@@ -51,6 +74,7 @@ if __name__ == "__main__":
 
     # meshtastic_stuff(esplora_inst)
     meshcore_stuff(esplora_inst)
+    # lora_sample(esplora_inst)
 
     while True:
         time.sleep(1)
